@@ -12,7 +12,6 @@ import {
   ShieldCheck,
   Users,
   ChevronDown,
-  Phone,
   Stethoscope,
   Award,
   GraduationCap,
@@ -21,12 +20,12 @@ import {
   Building,
   Navigation,
   FileText,
-  RotateCcw,
-  MessageCircle,
   Sparkles,
   AlertCircle,
   Video,
-  ExternalLink
+  Calendar,
+  Languages,
+  Check
 } from 'lucide-react';
 import { API_BASE_URL, MAIN_WEBSITE_URL, PINCODE_API_URL } from './config';
 import BorderGlow from './components/BorderGlow';
@@ -34,10 +33,10 @@ import LiquidButton from './components/LiquidButton';
 import AnimatedTabs from './components/AnimatedTabs';
 
 const STEP_INFO = {
-  1: { title: 'Personal Details', sub: 'Enter your basic contact information', shortTitle: 'Personal' },
-  2: { title: 'Medical Credentials', sub: 'Qualifications & council registration', shortTitle: 'Credentials' },
-  3: { title: 'Practice & Services', sub: 'Clinic details & consultation setup', shortTitle: 'Practice' },
-  4: { title: 'Review & Submit', sub: 'Confirm your details to get early access', shortTitle: 'Confirm' },
+  1: { title: 'Doctor Information', sub: 'Personal details & contact preferences', shortTitle: 'Personal' },
+  2: { title: 'Professional Credentials', sub: 'Qualification, registration & specialty', shortTitle: 'Credentials' },
+  3: { title: 'Practice & Preferences', sub: 'Clinic details & Vorqard service preferences', shortTitle: 'Practice' },
+  4: { title: 'Review & Declaration', sub: 'Confirm details and consent for onboarding', shortTitle: 'Confirm' },
 };
 
 const VORQARD_FEATURES_OPTIONS = [
@@ -52,18 +51,18 @@ const VORQARD_FEATURES_OPTIONS = [
 export default function App() {
   const [step, setStep] = useState(1);
 
-  // ─── Form State ───────────────────────────────────────────────
+  // ─── Form State (Checkboxes empty by default, Consent false by default) ───
   const [formData, setFormData] = useState({
     // Section 1 & 7: Doctor Information & Communication
     fullName: '',
     phone: '',
     email: '',
-    gender: '',
     dob: '',
+    gender: '',
     preferredComm: 'WhatsApp',
-    contactBeforeLaunch: true,
+    contactBeforeLaunch: 'Yes',
 
-    // Section 2 & 6: Professional Information
+    // Section 2 & 6: Professional Information & Profile
     qualification: '',
     medicalRegNo: '',
     stateCouncil: '',
@@ -73,26 +72,19 @@ export default function App() {
     designation: '',
     languages: '',
 
-    // Section 3, 4 & 5: Practice & Preferences
+    // Section 3, 4 & 5: Practice, Services & Availability (Unchecked by default)
     hospitalName: '',
     pincode: '',
     city: '',
     state: '',
     clinicAddress: '',
-    consultationTypes: ['In-person consultation', 'Online consultation'],
-    featuresInterest: [
-      'Appointment management',
-      'Online consultations',
-      'Patient communication',
-      'Digital prescriptions / consultation notes',
-      'Reports / document management',
-      'AI-assisted booking and reminders'
-    ],
+    consultationTypes: [],
+    featuresInterest: [],
     dailyConsultations: '',
     additionalComments: '',
 
-    // Section 8: Declaration & Consent
-    consent: true
+    // Section 8: Declaration & Consent (Unchecked by default)
+    consent: false
   });
 
   const [errors, setErrors] = useState({});
@@ -123,6 +115,7 @@ export default function App() {
       setFormData((prev) => ({ ...prev, consultationTypes: current }));
       return;
     }
+
     if (type === 'checkbox' && name === 'featuresInterest') {
       const current = [...formData.featuresInterest];
       if (checked) {
@@ -134,6 +127,7 @@ export default function App() {
       setFormData((prev) => ({ ...prev, featuresInterest: current }));
       return;
     }
+
     if (type === 'checkbox') {
       setFormData((prev) => ({ ...prev, [key]: checked }));
       if (errors[key]) setErrors((prev) => ({ ...prev, [key]: '' }));
@@ -182,7 +176,7 @@ export default function App() {
             return next;
           });
         } else {
-          setPincodeStatus('PIN code not found, enter location manually');
+          setPincodeStatus('PIN code not found, enter manually');
         }
       } catch (err) {
         console.warn('PIN code lookup error:', err);
@@ -222,12 +216,8 @@ export default function App() {
       errs.email = 'Enter a valid email address.';
     }
 
-    if (!formData.gender) {
-      errs.gender = 'Please select gender.';
-    }
-
     if (!formData.preferredComm) {
-      errs.preferredComm = 'Please select preferred communication.';
+      errs.preferredComm = 'Please select preferred contact method.';
     }
 
     setErrors(errs);
@@ -255,6 +245,14 @@ export default function App() {
     const errs = {};
     if (!formData.hospitalName.trim())
       errs.hospitalName = 'Hospital or clinic name is required';
+
+    const pin = formData.pincode.trim();
+    if (!pin) {
+      errs.pincode = 'Postal / PIN code is required.';
+    } else if (!/^\d{6}$/.test(pin)) {
+      errs.pincode = 'Enter a valid 6-digit PIN code.';
+    }
+
     if (!formData.city.trim())
       errs.city = 'City is required';
     if (!formData.state.trim())
@@ -265,32 +263,44 @@ export default function App() {
     return Object.keys(errs).length === 0;
   };
 
-  // ─── Step 4 Validation ──────────────────────────────────────
+  // ─── Step 4 Validation (Consent MUST be checked) ─────────────
   const validateStep4 = () => {
     const errs = {};
-    if (!formData.consent)
-      errs.consent = 'Please confirm the declaration & consent to proceed.';
+    if (!formData.consent) {
+      errs.consent = 'Please tick the declaration and consent box to complete your registration.';
+    }
 
     setErrors(errs);
     if (Object.keys(errs).length > 0) triggerBuzz();
     return Object.keys(errs).length === 0;
   };
 
-  // ─── Step Transitions ────────────────────────────────────────
-  const handleNext = () => {
+  // ─── Step Navigation ────────────────────────────────────────
+  const handleNext = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
     if (step === 1 && validateStep1()) setStep(2);
     else if (step === 2 && validateStep2()) setStep(3);
     else if (step === 3 && validateStep3()) setStep(4);
   };
 
-  const handleBack = () => {
+  const handleBack = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
     if (step > 1) setStep(step - 1);
   };
 
-  // ─── Submit Handler ──────────────────────────────────────────
+  // ─── Submit Handler (Only executed on Step 4) ─────────────────
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateStep1() || !validateStep2() || !validateStep3() || !validateStep4()) return;
+    if (e && e.preventDefault) e.preventDefault();
+
+    // If user presses enter on steps 1-3, advance step rather than submitting
+    if (step < 4) {
+      handleNext(e);
+      return;
+    }
+
+    if (!validateStep1() || !validateStep2() || !validateStep3() || !validateStep4()) {
+      return;
+    }
 
     setServerError('');
     setIsSubmitting(true);
@@ -319,7 +329,7 @@ export default function App() {
       languages_spoken: formData.languages ? formData.languages.split(',').map((s) => s.trim()).filter(Boolean) : [],
       interested_features: formData.featuresInterest,
       notes: [
-        `Contact before launch: ${formData.contactBeforeLaunch ? 'Yes' : 'No'}`,
+        `Contact before launch: ${formData.contactBeforeLaunch || 'Yes'}`,
         `Preferred contact: ${formData.preferredComm || 'WhatsApp'}`,
         formData.subSpecialty ? `Sub-specialty: ${formData.subSpecialty.trim()}` : '',
         formData.stateCouncil ? `Council: ${formData.stateCouncil.trim()}` : '',
@@ -341,17 +351,25 @@ export default function App() {
           body: JSON.stringify(payload)
         });
       }
-      const result = await response.json();
+
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseErr) {
+        result = { detail: `Server error (Status: ${response.status})` };
+      }
+
       if (response.ok && result.success) {
         setRegisteredData(result);
         triggerConfetti();
       } else {
-        setServerError(result.detail || 'Registration failed. Please check your details.');
+        const errMsg = result.detail || result.message || 'Registration failed. Please check your details and try again.';
+        setServerError(errMsg);
         triggerBuzz();
       }
     } catch (err) {
       console.error('[Doctor Registry] Network error:', err);
-      setServerError('Unable to connect to VORQARD server. Please ensure backend is running.');
+      setServerError(err.message || 'Unable to connect to VORQARD server. Please ensure backend is running.');
       triggerBuzz();
     } finally {
       setIsSubmitting(false);
@@ -369,186 +387,100 @@ export default function App() {
     } catch (e) { /* silent */ }
   };
 
-  const handleReset = () => {
-    setFormData({
-      fullName: '', phone: '', email: '', gender: '', dob: '', preferredComm: 'WhatsApp', contactBeforeLaunch: true,
-      qualification: '', medicalRegNo: '', stateCouncil: '', specialty: '', subSpecialty: '', experienceYears: '', designation: '', languages: '',
-      hospitalName: '', pincode: '', city: '', state: '', clinicAddress: '',
-      consultationTypes: ['In-person consultation', 'Online consultation'],
-      featuresInterest: [
-        'Appointment management',
-        'Online consultations',
-        'Patient communication',
-        'Digital prescriptions / consultation notes',
-        'Reports / document management',
-        'AI-assisted booking and reminders'
-      ],
-      dailyConsultations: '', additionalComments: '',
-      consent: true
-    });
-    setErrors({});
-    setRegisteredData(null);
-    setServerError('');
-    setStep(1);
-  };
-
   return (
     <div className="vq-page-root">
-      {/* ══════════════ TOP HEADER BAR ══════════════ */}
+
+      {/* ══════════════ HEADER ══════════════ */}
       <header
         style={{
           width: '100%',
-          height: '64px',
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          borderBottom: '1px solid rgba(226, 232, 240, 0.85)',
+          background: '#FFFFFF',
+          borderBottom: '1px solid #E2E8F0',
+          padding: '12px 32px',
           display: 'flex',
-          alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 42px',
-          position: 'relative',
+          alignItems: 'center',
           zIndex: 50,
-          flexShrink: 0,
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.04)'
         }}
       >
-        <a href="https://www.vorqard.com/" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center' }}>
-          <img
-            src="/Abhivorn_logo.png"
-            alt="Vorqard Logo"
-            style={{ height: '40px', width: 'auto', objectFit: 'contain' }}
-            onError={(e) => {
-              e.currentTarget.src = '/logo.png';
-            }}
-          />
+        <a href={MAIN_WEBSITE_URL} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+          <img src="/logo.png" alt="Vorqard" style={{ height: '38px', width: 'auto', objectFit: 'contain' }} />
         </a>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          {/* Explore Button */}
-          <a
-            href="https://www.vorqard.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 18px',
-              borderRadius: '10px',
-              background: '#FFFFFF',
-              border: '1px solid #CBD5E1',
-              color: '#334155',
-              fontSize: '13.5px',
-              fontWeight: 700,
-              textDecoration: 'none',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
-            }}
-          >
-            <span>Explore</span>
-            <ExternalLink size={13} />
-          </a>
-
-          {/* Get Started / Sign Up Button */}
-          <a
-            href="https://app.vorqard.com/signup"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 20px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
-              border: 'none',
-              color: '#FFFFFF',
-              fontSize: '13.5px',
-              fontWeight: 700,
-              textDecoration: 'none',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 4px 12px rgba(2, 132, 199, 0.28)',
-            }}
-          >
-            <span>Get Started</span>
-            <ArrowRight size={14} />
-          </a>
-        </div>
+        <a
+          href={MAIN_WEBSITE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '8px 20px',
+            borderRadius: '9999px',
+            background: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
+            border: 'none',
+            color: '#FFFFFF',
+            fontSize: '13px',
+            fontWeight: 700,
+            textDecoration: 'none',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            boxShadow: '0 3px 12px rgba(2, 132, 199, 0.28)'
+          }}
+        >
+          <span>Explore More</span>
+          <ArrowRight size={13} />
+        </a>
       </header>
 
       {/* ══════════════ MAIN HERO PAGE CONTENT ══════════════ */}
       <div className="vq-page-wrapper">
-        {/* Softer Premium Light Blue Healthcare Gradient Overlay */}
         <div className="vq-gradient-overlay" />
 
-        {/* Subtle Ambient Glowing Background Accents */}
+        {/* Ambient Glowing Background Accents */}
         <div
           className="animate-pulse-glow"
           style={{
-            position: 'absolute',
-            top: '-120px',
-            left: '-100px',
-            width: '400px',
-            height: '400px',
-            background: '#38BDF8',
-            borderRadius: '50%',
-            filter: 'blur(100px)',
-            opacity: 0.32,
-            pointerEvents: 'none',
-            zIndex: 0,
+            position: 'absolute', top: '-120px', left: '-100px', width: '420px', height: '420px',
+            background: '#38BDF8', borderRadius: '50%', filter: 'blur(100px)', opacity: 0.32, pointerEvents: 'none', zIndex: 0
           }}
         />
         <div
           className="animate-pulse-glow"
           style={{
-            position: 'absolute',
-            bottom: '-60px',
-            left: '32%',
-            width: '360px',
-            height: '360px',
-            background: '#67E8F9',
-            borderRadius: '50%',
-            filter: 'blur(90px)',
-            opacity: 0.28,
-            pointerEvents: 'none',
-            zIndex: 0,
+            position: 'absolute', bottom: '-60px', left: '32%', width: '380px', height: '380px',
+            background: '#67E8F9', borderRadius: '50%', filter: 'blur(90px)', opacity: 0.28, pointerEvents: 'none', zIndex: 0
           }}
         />
 
-        {/* Responsive 2-Column Split Container */}
+        {/* Responsive 2-Column Container */}
         <motion.div
-          initial={{ opacity: 0, y: 12, scale: 0.99 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -12, scale: 0.99 }}
-          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           className="vq-container"
         >
           {/* ─────────── LEFT HERO COLUMN: Why Join Vorqard Doctor? ─────────── */}
           <div className="vq-hero-column">
-            {/* Headline & Description */}
             <div>
               <div className="vq-hero-badge">
                 <Sparkles size={14} className="text-[#0284C7]" />
-                <span>Doctor Early Access Program</span>
+                <span>Doctor Pre-Launch Registration</span>
               </div>
               <h1 className="vq-hero-title">
-                Empowering Doctors.<br />
-                <span>Advancing Healthcare.</span>
+                Why Join <span>Vorqard Doctor</span>?
               </h1>
               <p className="vq-hero-desc">
-                Why Join Vorqard Doctor? Join thousands of trusted physicians streamlining OPD queues, digital records, and patient teleconsultations.
+                Thank you for your interest in joining Vorqard. This pre-launch form helps us understand doctor availability, specialties, and preferred services before launch.
               </p>
             </div>
 
-            {/* 5 Feature Cards */}
+            {/* 5 Benefit Cards */}
             <div className="vq-features-list">
-              {/* Card 1: Grow Your Practice */}
               <div className="vq-feature-card">
                 <div className="vq-feature-icon-box">
-                  <Users size={19} strokeWidth={2.2} />
+                  <Users size={18} strokeWidth={2.2} />
                 </div>
                 <div className="vq-feature-info">
                   <h4>Grow Your Practice</h4>
@@ -556,10 +488,9 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Card 2: Smart Digital Practice */}
               <div className="vq-feature-card">
                 <div className="vq-feature-icon-box">
-                  <FileText size={19} strokeWidth={2.2} />
+                  <FileText size={18} strokeWidth={2.2} />
                 </div>
                 <div className="vq-feature-info">
                   <h4>Smart Digital Practice</h4>
@@ -567,10 +498,9 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Card 3: Save Time */}
               <div className="vq-feature-card">
                 <div className="vq-feature-icon-box">
-                  <Clock size={19} strokeWidth={2.2} />
+                  <Clock size={18} strokeWidth={2.2} />
                 </div>
                 <div className="vq-feature-info">
                   <h4>Save Time</h4>
@@ -578,10 +508,9 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Card 4: Connect With Patients */}
               <div className="vq-feature-card">
                 <div className="vq-feature-icon-box">
-                  <Video size={19} strokeWidth={2.2} />
+                  <Video size={18} strokeWidth={2.2} />
                 </div>
                 <div className="vq-feature-info">
                   <h4>Connect With Patients</h4>
@@ -589,10 +518,9 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Card 5: Trusted & Secure */}
               <div className="vq-feature-card">
                 <div className="vq-feature-icon-box">
-                  <ShieldCheck size={19} strokeWidth={2.2} />
+                  <ShieldCheck size={18} strokeWidth={2.2} />
                 </div>
                 <div className="vq-feature-info">
                   <h4>Trusted & Secure</h4>
@@ -600,122 +528,76 @@ export default function App() {
                 </div>
               </div>
             </div>
-
-            {/* Explore Platform Link Card */}
-            <div style={{ paddingTop: '4px' }}>
-              <a
-                href="https://www.vorqard.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="vq-explore-card"
-              >
-                <div>
-                  <p style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Learn more
-                  </p>
-                  <p style={{ fontWeight: 800, color: '#0284C7', fontSize: '14px' }}>
-                    Explore Platform
-                  </p>
-                </div>
-                <div className="vq-explore-btn-circle">
-                  <ArrowRight size={16} />
-                </div>
-              </a>
-            </div>
           </div>
 
-          {/* ─────────── RIGHT FORM CARD: React Bits BorderGlow ─────────── */}
+          {/* ─────────── RIGHT FORM CARD COLUMN ─────────── */}
           <div className="vq-card-column">
-            <BorderGlow
-              borderRadius="24px"
-              glowColor="#0284C7"
-              secondaryGlow="#38BDF8"
-              glowSize={220}
-              borderWidth={1.5}
-              className="shadow-[0_20px_50px_rgba(0,0,0,0.07),_0_4px_16px_rgba(0,0,0,0.03)]"
-            >
-              <div style={{ padding: '26px 30px 22px 30px' }}>
+            <BorderGlow glowColor="#0284C7" secondaryGlow="#38BDF8" borderRadius="20px">
+              <div style={{ padding: '22px 26px', display: 'flex', flexDirection: 'column' }}>
+
                 {registeredData ? (
                   /* ══ SUCCESS VIEW ══ */
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.35 }}
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '10px 0' }}
+                    style={{ textAlign: 'center', padding: '16px 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
                   >
                     <div style={{
-                      width: '60px', height: '60px', borderRadius: '22px', background: '#E0F2FE', color: '#0284C7',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px', border: '1px solid #BAE6FD'
+                      width: '64px', height: '64px', borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
+                      color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      marginBottom: '16px', boxShadow: '0 8px 24px rgba(2, 132, 199, 0.35)'
                     }}>
-                      <CheckCircle2 size={34} className="animate-bounce" />
+                      <CheckCircle2 size={34} />
                     </div>
 
-                    <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0F172A', marginBottom: '4px', letterSpacing: '-0.02em' }}>
-                      Registration Confirmed! 🎉
+                    <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0F172A', marginBottom: '6px' }}>
+                      Pre-Launch Registration Confirmed! 🎉
                     </h2>
-                    <p style={{ fontSize: '13px', color: '#64748B', lineHeight: '1.45', marginBottom: '18px' }}>
-                      Thank you, <strong style={{ color: '#0F172A', fontWeight: 700 }}>Dr. {formData.fullName}</strong>. You have secured VIP priority onboarding with Vorqard Doctor App.
+                    <p style={{ fontSize: '13px', color: '#64748B', lineHeight: '1.5', marginBottom: '20px' }}>
+                      Thank you, <strong style={{ color: '#0F172A', fontWeight: 700 }}>Dr. {formData.fullName}</strong>. You have secured VIP priority early access with the Vorqard Doctor Network.
                     </p>
 
-                    {/* Reference Code Box */}
                     <div style={{
-                      width: '100%', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '14px',
-                      padding: '14px', marginBottom: '18px', textAlign: 'center'
+                      width: '100%', background: '#F0F9FF', border: '1.5px dashed #0284C7', borderRadius: '12px',
+                      padding: '14px', textAlign: 'center'
                     }}>
-                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '3px' }}>
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#0369A1', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '3px' }}>
                         Your Reference Code
                       </div>
-                      <div style={{ fontSize: '22px', fontWeight: 900, color: '#0284C7', letterSpacing: '0.12em', fontFamily: 'monospace' }}>
+                      <div style={{ fontSize: '22px', fontWeight: 900, color: '#0284C7', letterSpacing: '0.1em' }}>
                         {registeredData.reg_code}
                       </div>
                     </div>
-
-                    {/* WhatsApp Support Liquid Button */}
-                    <a
-                      href={`https://wa.me/${WHATSAPP_SUPPORT_PHONE}?text=${encodeURIComponent(`Hi VORQARD Team, I am Dr. ${formData.fullName} (${registeredData.reg_code}). I registered for Doctor App Early Access.`)}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{ width: '100%', marginBottom: '10px', display: 'block', textDecoration: 'none' }}
-                    >
-                      <LiquidButton
-                        variant="whatsapp"
-                        icon={<MessageCircle size={18} />}
-                        className="w-full py-3.5 text-sm font-bold"
-                      >
-                        Chat with Onboarding Team
-                      </LiquidButton>
-                    </a>
-
-                    {/* Reset Link */}
-                    <button
-                      type="button"
-                      onClick={handleReset}
-                      style={{
-                        display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 700,
-                        color: '#64748B', background: 'none', border: 'none', cursor: 'pointer', padding: '6px 12px'
-                      }}
-                    >
-                      <RotateCcw size={13} />
-                      <span>Register another doctor</span>
-                    </button>
                   </motion.div>
                 ) : (
                   /* ══ STEP WIZARD FORM ══ */
-                  <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    {/* Form Content Header */}
-                    <h2 style={{ fontSize: '21px', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em', textAlign: 'center', marginBottom: '2px' }}>
-                      {STEP_INFO[step].title}
-                    </h2>
-                    <p style={{ fontSize: '12.5px', color: '#64748B', fontWeight: 500, textAlign: 'center', marginBottom: '12px' }}>
-                      {STEP_INFO[step].sub}
-                    </p>
+                  <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
 
-                    {/* Animated Tabs (animate-ui style) */}
+                    {/* Step Title Header */}
+                    <div style={{ marginBottom: '10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                        <h2 style={{ fontSize: '19px', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>
+                          {STEP_INFO[step].title}
+                        </h2>
+                        <span style={{
+                          fontSize: '11px', fontWeight: 700, color: '#0284C7', background: '#E0F2FE',
+                          padding: '3px 9px', borderRadius: '9999px', border: '1px solid #BAE6FD'
+                        }}>
+                          Step {step} of 4
+                        </span>
+                      </div>
+                      <p style={{ fontSize: '12px', color: '#64748B', fontWeight: 500 }}>
+                        {STEP_INFO[step].sub}
+                      </p>
+                    </div>
+
+                    {/* Animated Tabs */}
                     <AnimatedTabs
                       steps={STEP_INFO}
                       currentStep={step}
                       onStepClick={(s) => setStep(s)}
-                      className="mb-3.5"
+                      className="mb-3"
                     />
 
                     {/* Server Error Alert */}
@@ -734,7 +616,7 @@ export default function App() {
                       </motion.div>
                     )}
 
-                    {/* Form with Shake Animation on Validation Error */}
+                    {/* Form Fields with Shake on Error */}
                     <motion.form
                       key={shakeCount}
                       animate={shakeCount > 0 ? { x: [0, -8, 8, -5, 5, -2, 2, 0] } : {}}
@@ -743,9 +625,10 @@ export default function App() {
                       noValidate
                       style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}
                     >
-                      {/* ─── STEP 1: Personal Details ─── */}
+
+                      {/* ─── STEP 1: Doctor Information (Section 1 & 7) ─── */}
                       {step === 1 && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '9px' }}>
                           {/* Full Name */}
                           <div>
                             <label className="vq-field-label">
@@ -753,105 +636,118 @@ export default function App() {
                             </label>
                             <div className="vq-input-wrapper">
                               <span className="vq-input-icon">
-                                <User size={16} />
+                                <User size={15} />
                               </span>
                               <input
                                 type="text"
                                 id="fullName"
-                                placeholder="e.g. Dr. John Doe"
                                 value={formData.fullName}
                                 onChange={handleChange}
                                 className={`vq-input ${errors.fullName ? 'err' : ''}`}
                               />
                             </div>
-                            {errors.fullName && (
-                              <span className="vq-error-text">{errors.fullName}</span>
-                            )}
+                            {errors.fullName && <span className="vq-error-text">{errors.fullName}</span>}
                           </div>
 
-                          {/* Mobile Number */}
+                          {/* Mobile Number with Vector Indian Flag */}
                           <div>
                             <label className="vq-field-label">
                               MOBILE NUMBER <span className="req">*</span>
                             </label>
                             <div className="vq-input-wrapper">
                               <div style={{
-                                position: 'absolute', left: '12px', display: 'flex', alignItems: 'center', gap: '5px',
-                                color: '#64748B', fontWeight: 600, fontSize: '13px', userSelect: 'none', borderRight: '1px solid #CBD5E1', paddingRight: '8px'
+                                position: 'absolute', left: '10px', display: 'flex', alignItems: 'center', gap: '6px',
+                                background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '3px 7px',
+                                userSelect: 'none', zIndex: 2
                               }}>
-                                <span>🇮🇳</span>
-                                <span>+91</span>
+                                <svg width="18" height="12" viewBox="0 0 24 16" fill="none" style={{ borderRadius: '2px', display: 'block' }}>
+                                  <rect width="24" height="5.33" fill="#FF9933" />
+                                  <rect y="5.33" width="24" height="5.33" fill="#FFFFFF" />
+                                  <rect y="10.66" width="24" height="5.33" fill="#138808" />
+                                  <circle cx="12" cy="8" r="2.2" fill="#000080" />
+                                </svg>
+                                <span style={{ fontSize: '12px', fontWeight: 700, color: '#334155', lineHeight: 1 }}>+91</span>
                               </div>
                               <input
                                 type="tel"
                                 id="phone"
                                 maxLength={10}
-                                placeholder="10-digit mobile number"
                                 value={formData.phone}
                                 onChange={handleChange}
-                                style={{ paddingLeft: '80px' }}
+                                style={{ paddingLeft: '84px' }}
                                 className={`vq-input ${errors.phone ? 'err' : ''}`}
                               />
                             </div>
-                            {errors.phone && (
-                              <span className="vq-error-text">{errors.phone}</span>
-                            )}
+                            {errors.phone && <span className="vq-error-text">{errors.phone}</span>}
                           </div>
 
                           {/* Work Email */}
                           <div>
                             <label className="vq-field-label">
-                              WORK EMAIL <span className="req">*</span>
+                              EMAIL ADDRESS <span className="req">*</span>
                             </label>
                             <div className="vq-input-wrapper">
                               <span className="vq-input-icon">
-                                <Mail size={16} />
+                                <Mail size={15} />
                               </span>
                               <input
                                 type="email"
                                 id="email"
-                                placeholder="doctor@hospital.com"
                                 value={formData.email}
                                 onChange={handleChange}
                                 className={`vq-input ${errors.email ? 'err' : ''}`}
                               />
                             </div>
-                            {errors.email && (
-                              <span className="vq-error-text">{errors.email}</span>
-                            )}
+                            {errors.email && <span className="vq-error-text">{errors.email}</span>}
                           </div>
 
-                          {/* Gender & Preferred Comm. */}
+                          {/* Date of Birth & Gender (Optional as per Section 1) */}
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                            {/* Gender */}
                             <div>
                               <label className="vq-field-label">
-                                GENDER <span className="req">*</span>
+                                DATE OF BIRTH
+                              </label>
+                              <div className="vq-input-wrapper">
+                                <span className="vq-input-icon">
+                                  <Calendar size={15} />
+                                </span>
+                                <input
+                                  type="date"
+                                  id="dob"
+                                  value={formData.dob}
+                                  onChange={handleChange}
+                                  className="vq-input"
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="vq-field-label">
+                                GENDER
                               </label>
                               <div className="vq-input-wrapper">
                                 <select
                                   id="gender"
                                   value={formData.gender}
                                   onChange={handleChange}
-                                  className={`vq-select ${errors.gender ? 'err' : ''}`}
+                                  className="vq-select"
                                   style={{ color: formData.gender ? '#0F172A' : '#94A3B8' }}
                                 >
-                                  <option value="" disabled>Select</option>
+                                  <option value="">Select Gender</option>
                                   <option value="Male">Male</option>
                                   <option value="Female">Female</option>
                                   <option value="Other">Other</option>
                                 </select>
                                 <ChevronDown size={14} className="vq-select-chevron" />
                               </div>
-                              {errors.gender && (
-                                <span className="vq-error-text">{errors.gender}</span>
-                              )}
                             </div>
+                          </div>
 
-                            {/* Preferred Comm */}
+                          {/* Preferred Contact Method & Contact Before Launch */}
+                          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '10px' }}>
                             <div>
                               <label className="vq-field-label">
-                                PREFERRED COMM.
+                                PREFERRED CONTACT <span className="req">*</span>
                               </label>
                               <div className="vq-input-wrapper">
                                 <select
@@ -861,8 +757,26 @@ export default function App() {
                                   className="vq-select"
                                 >
                                   <option value="WhatsApp">WhatsApp</option>
-                                  <option value="Phone Call">Phone Call</option>
+                                  <option value="Phone call">Phone call</option>
                                   <option value="Email">Email</option>
+                                </select>
+                                <ChevronDown size={14} className="vq-select-chevron" />
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="vq-field-label">
+                                CONTACT BEFORE LAUNCH?
+                              </label>
+                              <div className="vq-input-wrapper">
+                                <select
+                                  id="contactBeforeLaunch"
+                                  value={formData.contactBeforeLaunch}
+                                  onChange={handleChange}
+                                  className="vq-select"
+                                >
+                                  <option value="Yes">Yes</option>
+                                  <option value="No">No</option>
                                 </select>
                                 <ChevronDown size={14} className="vq-select-chevron" />
                               </div>
@@ -871,11 +785,52 @@ export default function App() {
                         </div>
                       )}
 
-                      {/* ─── STEP 2: Medical Credentials ─── */}
+                      {/* ─── STEP 2: Professional Information (Section 2 & 6) ─── */}
                       {step === 2 && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '9px' }}>
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                            {/* Specialty */}
+                            {/* Highest Qualification */}
+                            <div>
+                              <label className="vq-field-label">
+                                HIGHEST QUALIFICATION <span className="req">*</span>
+                              </label>
+                              <div className="vq-input-wrapper">
+                                <span className="vq-input-icon">
+                                  <GraduationCap size={15} />
+                                </span>
+                                <input
+                                  type="text"
+                                  id="qualification"
+                                  value={formData.qualification}
+                                  onChange={handleChange}
+                                  className={`vq-input ${errors.qualification ? 'err' : ''}`}
+                                />
+                              </div>
+                              {errors.qualification && <span className="vq-error-text">{errors.qualification}</span>}
+                            </div>
+
+                            {/* Medical Reg No (Optional) */}
+                            <div>
+                              <label className="vq-field-label">
+                                MEDICAL COUNCIL REG. NO.
+                              </label>
+                              <div className="vq-input-wrapper">
+                                <span className="vq-input-icon">
+                                  <Award size={15} />
+                                </span>
+                                <input
+                                  type="text"
+                                  id="medicalRegNo"
+                                  value={formData.medicalRegNo}
+                                  onChange={handleChange}
+                                  className="vq-input"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                            {/* Specialization */}
                             <div>
                               <label className="vq-field-label">
                                 SPECIALIZATION <span className="req">*</span>
@@ -888,98 +843,218 @@ export default function App() {
                                   className={`vq-select ${errors.specialty ? 'err' : ''}`}
                                   style={{ color: formData.specialty ? '#0F172A' : '#94A3B8' }}
                                 >
-                                  <option value="" disabled>Select</option>
+                                  <option value="" disabled>Select Specialty</option>
                                   <option value="General Medicine">General Medicine</option>
                                   <option value="Cardiology">Cardiology</option>
                                   <option value="Orthopedics">Orthopedics</option>
                                   <option value="Dermatology">Dermatology</option>
                                   <option value="Pediatrics">Pediatrics</option>
-                                  <option value="Gynecology & Obstetrics">Gynecology</option>
+                                  <option value="Gynecology & Obstetrics">Gynecology & Obstetrics</option>
                                   <option value="Neurology">Neurology</option>
                                   <option value="ENT">ENT</option>
                                   <option value="Ophthalmology">Ophthalmology</option>
+                                  <option value="Psychiatry">Psychiatry</option>
+                                  <option value="Gastroenterology">Gastroenterology</option>
+                                  <option value="Pulmonology">Pulmonology</option>
+                                  <option value="Oncology">Oncology</option>
+                                  <option value="Urology">Urology</option>
+                                  <option value="Dentistry">Dentistry</option>
+                                  <option value="Ayurveda / Homeopathy">Ayurveda / Homeopathy</option>
                                   <option value="Other">Other</option>
                                 </select>
                                 <ChevronDown size={14} className="vq-select-chevron" />
                               </div>
-                              {errors.specialty && (
-                                <span className="vq-error-text">{errors.specialty}</span>
-                              )}
+                              {errors.specialty && <span className="vq-error-text">{errors.specialty}</span>}
                             </div>
 
-                            {/* Experience Years */}
+                            {/* Years of Experience */}
                             <div>
                               <label className="vq-field-label">
-                                EXPERIENCE (YRS) <span className="req">*</span>
+                                YEARS OF EXPERIENCE <span className="req">*</span>
                               </label>
                               <div className="vq-input-wrapper">
                                 <span className="vq-input-icon">
-                                  <Briefcase size={16} />
+                                  <Briefcase size={15} />
                                 </span>
                                 <input
                                   type="number"
                                   id="experienceYears"
                                   min="0"
-                                  placeholder="e.g. 8"
                                   value={formData.experienceYears}
                                   onChange={handleChange}
                                   className={`vq-input ${errors.experienceYears ? 'err' : ''}`}
                                 />
                               </div>
-                              {errors.experienceYears && (
-                                <span className="vq-error-text">{errors.experienceYears}</span>
-                              )}
+                              {errors.experienceYears && <span className="vq-error-text">{errors.experienceYears}</span>}
                             </div>
                           </div>
 
-                          {/* Medical Reg No */}
-                          <div>
-                            <label className="vq-field-label">
-                              MEDICAL COUNCIL REG. NO. <span className="req">*</span>
-                            </label>
-                            <div className="vq-input-wrapper">
-                              <span className="vq-input-icon">
-                                <Award size={16} />
-                              </span>
-                              <input
-                                type="text"
-                                id="medicalRegNo"
-                                placeholder="e.g. MCI-12345 / State Council ID"
-                                value={formData.medicalRegNo}
-                                onChange={handleChange}
-                                className={`vq-input ${errors.medicalRegNo ? 'err' : ''}`}
-                              />
-                            </div>
-                            {errors.medicalRegNo && (
-                              <span className="vq-error-text">{errors.medicalRegNo}</span>
-                            )}
-                          </div>
-
-                          {/* Qualifications & State */}
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                            {/* Qualifications */}
+                            {/* Sub-specialization */}
                             <div>
                               <label className="vq-field-label">
-                                QUALIFICATIONS <span className="req">*</span>
+                                SUB-SPECIALIZATION
                               </label>
                               <div className="vq-input-wrapper">
                                 <span className="vq-input-icon">
-                                  <GraduationCap size={16} />
+                                  <Stethoscope size={15} />
                                 </span>
                                 <input
                                   type="text"
-                                  id="qualification"
-                                  placeholder="e.g. MBBS, MD"
-                                  value={formData.qualification}
+                                  id="subSpecialty"
+                                  value={formData.subSpecialty}
                                   onChange={handleChange}
-                                  className={`vq-input ${errors.qualification ? 'err' : ''}`}
+                                  className="vq-input"
                                 />
                               </div>
-                              {errors.qualification && (
-                                <span className="vq-error-text">{errors.qualification}</span>
+                            </div>
+
+                            {/* State Council of Registration */}
+                            <div>
+                              <label className="vq-field-label">
+                                STATE / MEDICAL COUNCIL
+                              </label>
+                              <div className="vq-input-wrapper">
+                                <span className="vq-input-icon">
+                                  <Building size={15} />
+                                </span>
+                                <input
+                                  type="text"
+                                  id="stateCouncil"
+                                  value={formData.stateCouncil}
+                                  onChange={handleChange}
+                                  className="vq-input"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                            {/* Designation */}
+                            <div>
+                              <label className="vq-field-label">
+                                CURRENT DESIGNATION
+                              </label>
+                              <div className="vq-input-wrapper">
+                                <span className="vq-input-icon">
+                                  <Briefcase size={15} />
+                                </span>
+                                <input
+                                  type="text"
+                                  id="designation"
+                                  value={formData.designation}
+                                  onChange={handleChange}
+                                  className="vq-input"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Languages Spoken Dropdown */}
+                            <div>
+                              <label className="vq-field-label">
+                                LANGUAGES SPOKEN
+                              </label>
+                              <div className="vq-input-wrapper">
+                                <select
+                                  id="languages"
+                                  value={formData.languages}
+                                  onChange={handleChange}
+                                  className="vq-select"
+                                  style={{ color: formData.languages ? '#0F172A' : '#94A3B8' }}
+                                >
+                                  <option value="">Select Languages</option>
+                                  <option value="English, Hindi, Telugu">English, Hindi, Telugu</option>
+                                  <option value="English, Telugu">English, Telugu</option>
+                                  <option value="English, Hindi">English, Hindi</option>
+                                  <option value="Telugu">Telugu</option>
+                                  <option value="Hindi">Hindi</option>
+                                  <option value="English">English</option>
+                                  <option value="English, Hindi, Kannada">English, Hindi, Kannada</option>
+                                  <option value="English, Tamil">English, Tamil</option>
+                                  <option value="English, Malayalam">English, Malayalam</option>
+                                  <option value="Other">Other</option>
+                                </select>
+                                <ChevronDown size={14} className="vq-select-chevron" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ─── STEP 3: Practice & Service Preferences (Section 3, 4 & 5) ─── */}
+                      {step === 3 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '9px' }}>
+                          {/* Hospital / Clinic Name */}
+                          <div>
+                            <label className="vq-field-label">
+                              HOSPITAL / CLINIC NAME <span className="req">*</span>
+                            </label>
+                            <div className="vq-input-wrapper">
+                              <span className="vq-input-icon">
+                                <Building2 size={15} />
+                              </span>
+                              <input
+                                type="text"
+                                id="hospitalName"
+                                value={formData.hospitalName}
+                                onChange={handleChange}
+                                className={`vq-input ${errors.hospitalName ? 'err' : ''}`}
+                              />
+                            </div>
+                            {errors.hospitalName && <span className="vq-error-text">{errors.hospitalName}</span>}
+                          </div>
+
+                          {/* Postal / PIN Code (Auto-fill) & City */}
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                            <div>
+                              <label className="vq-field-label">
+                                POSTAL / PIN CODE <span className="req">*</span>
+                              </label>
+                              <div className="vq-input-wrapper">
+                                <span className="vq-input-icon">
+                                  <Navigation size={15} />
+                                </span>
+                                <input
+                                  type="text"
+                                  id="pincode"
+                                  maxLength={6}
+                                  value={formData.pincode}
+                                  onChange={handlePincodeChange}
+                                  className={`vq-input ${errors.pincode ? 'err' : ''}`}
+                                />
+                              </div>
+                              {errors.pincode && <span className="vq-error-text">{errors.pincode}</span>}
+                              {pincodeStatus && !errors.pincode && (
+                                <span style={{
+                                  fontSize: '11px', fontWeight: 600, marginTop: '2px', display: 'block',
+                                  color: pincodeStatus.startsWith('✓') ? '#10B981' : pincodeLoading ? '#0284C7' : '#EF4444'
+                                }}>
+                                  {pincodeStatus}
+                                </span>
                               )}
                             </div>
 
+                            <div>
+                              <label className="vq-field-label">
+                                CITY <span className="req">*</span>
+                              </label>
+                              <div className="vq-input-wrapper">
+                                <span className="vq-input-icon">
+                                  <MapPin size={15} />
+                                </span>
+                                <input
+                                  type="text"
+                                  id="city"
+                                  value={formData.city}
+                                  onChange={handleChange}
+                                  className={`vq-input ${errors.city ? 'err' : ''}`}
+                                />
+                              </div>
+                              {errors.city && <span className="vq-error-text">{errors.city}</span>}
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                             {/* State */}
                             <div>
                               <label className="vq-field-label">
@@ -987,247 +1062,183 @@ export default function App() {
                               </label>
                               <div className="vq-input-wrapper">
                                 <span className="vq-input-icon">
-                                  <MapPin size={16} />
+                                  <MapPin size={15} />
                                 </span>
                                 <input
                                   type="text"
                                   id="state"
-                                  placeholder="e.g. Karnataka"
                                   value={formData.state}
                                   onChange={handleChange}
                                   className={`vq-input ${errors.state ? 'err' : ''}`}
                                 />
                               </div>
-                              {errors.state && (
-                                <span className="vq-error-text">{errors.state}</span>
-                              )}
+                              {errors.state && <span className="vq-error-text">{errors.state}</span>}
                             </div>
-                          </div>
 
-                          {/* Current Designation */}
-                          <div>
-                            <label className="vq-field-label">
-                              CURRENT DESIGNATION
-                            </label>
-                            <div className="vq-input-wrapper">
-                              <span className="vq-input-icon">
-                                <Building size={16} />
-                              </span>
-                              <input
-                                type="text"
-                                id="designation"
-                                placeholder="e.g. Senior Consultant / Specialist"
-                                value={formData.designation}
-                                onChange={handleChange}
-                                className="vq-input"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* ─── STEP 3: Practice & Services ─── */}
-                      {step === 3 && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                            {/* Hospital / Clinic */}
+                            {/* Practice Location / Area */}
                             <div>
                               <label className="vq-field-label">
-                                HOSPITAL / CLINIC <span className="req">*</span>
+                                PRACTICE LOCATION / AREA
                               </label>
                               <div className="vq-input-wrapper">
                                 <span className="vq-input-icon">
-                                  <Building2 size={16} />
+                                  <Navigation size={15} />
                                 </span>
                                 <input
                                   type="text"
-                                  id="hospitalName"
-                                  placeholder="Hospital or Clinic Name"
-                                  value={formData.hospitalName}
+                                  id="clinicAddress"
+                                  value={formData.clinicAddress}
                                   onChange={handleChange}
-                                  className={`vq-input ${errors.hospitalName ? 'err' : ''}`}
+                                  className="vq-input"
                                 />
                               </div>
-                              {errors.hospitalName && (
-                                <span className="vq-error-text">{errors.hospitalName}</span>
-                              )}
-                            </div>
-
-                            {/* City */}
-                            <div>
-                              <label className="vq-field-label">
-                                CITY <span className="req">*</span>
-                              </label>
-                              <div className="vq-input-wrapper">
-                                <span className="vq-input-icon">
-                                  <MapPin size={16} />
-                                </span>
-                                <input
-                                  type="text"
-                                  id="city"
-                                  placeholder="e.g. Bangalore"
-                                  value={formData.city}
-                                  onChange={handleChange}
-                                  className={`vq-input ${errors.city ? 'err' : ''}`}
-                                />
-                              </div>
-                              {errors.city && (
-                                <span className="vq-error-text">{errors.city}</span>
-                              )}
                             </div>
                           </div>
 
-                          {/* Clinic Address */}
+                          {/* Preferred Consultation Mode */}
                           <div>
                             <label className="vq-field-label">
-                              CLINIC ADDRESS
-                            </label>
-                            <div className="vq-input-wrapper">
-                              <span className="vq-input-icon">
-                                <Navigation size={16} />
-                              </span>
-                              <input
-                                type="text"
-                                id="clinicAddress"
-                                placeholder="Full address / locality"
-                                value={formData.clinicAddress}
-                                onChange={handleChange}
-                                className="vq-input"
-                              />
-                            </div>
-                          </div>
-
-                          {/* Consultation Fee */}
-                          <div>
-                            <label className="vq-field-label">
-                              APPROX. CONSULTATION FEE
-                            </label>
-                            <div className="vq-input-wrapper">
-                              <span style={{ position: 'absolute', left: '14px', color: '#64748B', fontWeight: 700, fontSize: '14px' }}>
-                                ₹
-                              </span>
-                              <input
-                                type="number"
-                                id="consultationFee"
-                                min="0"
-                                placeholder="e.g. 500"
-                                value={formData.consultationFee}
-                                onChange={handleChange}
-                                className="vq-input"
-                                style={{ paddingLeft: '34px' }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Consultation Modes */}
-                          <div>
-                            <label className="vq-field-label">
-                              CONSULTATION MODES
+                              PREFERRED CONSULTATION MODE
                             </label>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                               <label
                                 style={{
-                                  display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px',
-                                  borderRadius: '10px', border: formData.consultationTypes.includes('In-person') ? '1.5px solid #0284C7' : '1px solid #CBD5E1',
-                                  background: formData.consultationTypes.includes('In-person') ? '#F0F9FF' : '#FFFFFF',
-                                  color: formData.consultationTypes.includes('In-person') ? '#0284C7' : '#475569',
-                                  fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', userSelect: 'none', transition: 'all 0.2s ease'
+                                  display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 12px',
+                                  borderRadius: '10px', border: formData.consultationTypes.includes('In-person consultation') ? '1.5px solid #0284C7' : '1px solid #CBD5E1',
+                                  background: formData.consultationTypes.includes('In-person consultation') ? '#F0F9FF' : '#FFFFFF',
+                                  color: formData.consultationTypes.includes('In-person consultation') ? '#0284C7' : '#475569',
+                                  fontSize: '12px', fontWeight: 600, cursor: 'pointer', userSelect: 'none', transition: 'all 0.2s ease'
                                 }}
                               >
                                 <input
                                   type="checkbox"
                                   name="consultationTypes"
-                                  value="In-person"
-                                  checked={formData.consultationTypes.includes('In-person')}
+                                  value="In-person consultation"
+                                  checked={formData.consultationTypes.includes('In-person consultation')}
                                   onChange={handleChange}
-                                  style={{ accentColor: '#0284C7', width: '15px', height: '15px' }}
+                                  style={{ accentColor: '#0284C7', width: '14px', height: '14px' }}
                                 />
-                                <span>In-Person OPD</span>
+                                <span>In-person</span>
                               </label>
 
                               <label
                                 style={{
-                                  display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px',
-                                  borderRadius: '10px', border: formData.consultationTypes.includes('Online Video') ? '1.5px solid #0284C7' : '1px solid #CBD5E1',
-                                  background: formData.consultationTypes.includes('Online Video') ? '#F0F9FF' : '#FFFFFF',
-                                  color: formData.consultationTypes.includes('Online Video') ? '#0284C7' : '#475569',
-                                  fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', userSelect: 'none', transition: 'all 0.2s ease'
+                                  display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 12px',
+                                  borderRadius: '10px', border: formData.consultationTypes.includes('Online consultation') ? '1.5px solid #0284C7' : '1px solid #CBD5E1',
+                                  background: formData.consultationTypes.includes('Online consultation') ? '#F0F9FF' : '#FFFFFF',
+                                  color: formData.consultationTypes.includes('Online consultation') ? '#0284C7' : '#475569',
+                                  fontSize: '12px', fontWeight: 600, cursor: 'pointer', userSelect: 'none', transition: 'all 0.2s ease'
                                 }}
                               >
                                 <input
                                   type="checkbox"
                                   name="consultationTypes"
-                                  value="Online Video"
-                                  checked={formData.consultationTypes.includes('Online Video')}
+                                  value="Online consultation"
+                                  checked={formData.consultationTypes.includes('Online consultation')}
                                   onChange={handleChange}
-                                  style={{ accentColor: '#0284C7', width: '15px', height: '15px' }}
+                                  style={{ accentColor: '#0284C7', width: '14px', height: '14px' }}
                                 />
-                                <span>Video Consult</span>
+                                <span>Online</span>
                               </label>
+                            </div>
+                          </div>
+
+                          {/* 6 Vorqard Features Checkboxes */}
+                          <div>
+                            <label className="vq-field-label">
+                              FEATURES / SERVICES OF INTEREST
+                            </label>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                              {VORQARD_FEATURES_OPTIONS.map((feat) => (
+                                <label
+                                  key={feat}
+                                  style={{
+                                    display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 8px',
+                                    borderRadius: '8px', border: formData.featuresInterest.includes(feat) ? '1px solid #0284C7' : '1px solid #E2E8F0',
+                                    background: formData.featuresInterest.includes(feat) ? '#F0F9FF' : '#FAFAFA',
+                                    fontSize: '11px', fontWeight: 600, color: formData.featuresInterest.includes(feat) ? '#0284C7' : '#475569',
+                                    cursor: 'pointer', userSelect: 'none'
+                                  }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    name="featuresInterest"
+                                    value={feat}
+                                    checked={formData.featuresInterest.includes(feat)}
+                                    onChange={handleChange}
+                                    style={{ accentColor: '#0284C7' }}
+                                  />
+                                  <span style={{ lineHeight: 1.2 }}>{feat}</span>
+                                </label>
+                              ))}
                             </div>
                           </div>
                         </div>
                       )}
 
-                      {/* ─── STEP 4: Review & Confirm ─── */}
+                      {/* ─── STEP 4: Review, Verification & Declaration (Section 8 & Consent) ─── */}
                       {step === 4 && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          {/* Verification Notice Banner */}
+                          <div style={{
+                            background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '10px',
+                            padding: '9px 12px', fontSize: '11.5px', color: '#1E40AF', lineHeight: '1.4',
+                            display: 'flex', gap: '8px'
+                          }}>
+                            <ShieldCheck size={16} style={{ color: '#2563EB', flexShrink: 0, marginTop: '2px' }} />
+                            <div>
+                              <strong>Verification during onboarding:</strong> Professional verification documents (Medical registration, Qualification, Identity) will be securely collected during platform onboarding.
+                            </div>
+                          </div>
+
                           {/* Summary Card */}
                           <div style={{
                             background: '#F0F9FF', border: '1px solid #BAE6FD', borderRadius: '12px',
                             padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px'
                           }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '5px', borderBottom: '1px solid #E0F2FE' }}>
-                              <span style={{ color: '#64748B', fontWeight: 600 }}>Doctor Name:</span>
-                              <span style={{ color: '#0F172A', fontWeight: 700 }}>Dr. {formData.fullName || '—'}</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '4px', borderBottom: '1px solid #E0F2FE' }}>
+                              <span style={{ color: '#64748B' }}>Doctor Name:</span>
+                              <strong style={{ color: '#0F172A' }}>Dr. {formData.fullName}</strong>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '5px', borderBottom: '1px solid #E0F2FE' }}>
-                              <span style={{ color: '#64748B', fontWeight: 600 }}>Mobile:</span>
-                              <span style={{ color: '#0F172A', fontWeight: 700 }}>+91 {formData.phone || '—'}</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '4px', borderBottom: '1px solid #E0F2FE' }}>
+                              <span style={{ color: '#64748B' }}>Mobile & Email:</span>
+                              <span style={{ color: '#0F172A', fontWeight: 600 }}>+91 {formData.phone} | {formData.email}</span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '5px', borderBottom: '1px solid #E0F2FE' }}>
-                              <span style={{ color: '#64748B', fontWeight: 600 }}>Specialty:</span>
-                              <span style={{ color: '#0F172A', fontWeight: 700 }}>{formData.specialty || '—'} ({formData.experienceYears || '0'} Yrs)</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '4px', borderBottom: '1px solid #E0F2FE' }}>
+                              <span style={{ color: '#64748B' }}>Qualification & Reg:</span>
+                              <span style={{ color: '#0F172A', fontWeight: 600 }}>{formData.qualification} {formData.medicalRegNo ? `(${formData.medicalRegNo})` : ''}</span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '5px', borderBottom: '1px solid #E0F2FE' }}>
-                              <span style={{ color: '#64748B', fontWeight: 600 }}>Reg No:</span>
-                              <span style={{ color: '#0F172A', fontWeight: 700, fontFamily: 'monospace' }}>{formData.medicalRegNo || '—'}</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '4px', borderBottom: '1px solid #E0F2FE' }}>
+                              <span style={{ color: '#64748B' }}>Specialization:</span>
+                              <span style={{ color: '#0F172A', fontWeight: 600 }}>{formData.specialty} ({formData.experienceYears} Yrs Exp)</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ color: '#64748B', fontWeight: 600 }}>Clinic / City:</span>
-                              <span style={{ color: '#0F172A', fontWeight: 700 }}>{formData.hospitalName || '—'}, {formData.city || '—'}</span>
+                              <span style={{ color: '#64748B' }}>Workplace:</span>
+                              <span style={{ color: '#0F172A', fontWeight: 600 }}>{formData.hospitalName}, {formData.city}, {formData.state}</span>
                             </div>
                           </div>
 
-                          {/* Consent Checkbox */}
-                          <label style={{
-                            display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '10px 12px',
-                            borderRadius: '10px', background: '#FFFFFF', border: '1px solid #CBD5E1', cursor: 'pointer', userSelect: 'none'
-                          }}>
+                          {/* Declaration & Consent Checkbox */}
+                          <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '11.5px', color: '#475569', lineHeight: '1.4' }}>
                             <input
                               type="checkbox"
                               id="consent"
                               checked={formData.consent}
                               onChange={handleChange}
-                              style={{ accentColor: '#0284C7', width: '15px', height: '15px', marginTop: '1px' }}
+                              style={{ accentColor: '#0284C7', width: '15px', height: '15px', marginTop: '2px', flexShrink: 0 }}
                             />
-                            <span style={{ fontSize: '11.5px', color: '#475569', lineHeight: '1.4' }}>
-                              I confirm that the details provided are accurate and agree to receive onboarding updates from Vorqard.
-                            </span>
+                            <span>I confirm that the information provided is accurate to the best of my knowledge. I agree that Vorqard / Abhivorn Technologies may contact me regarding doctor onboarding, platform launch information, and related professional services.</span>
                           </label>
-                          {errors.consent && (
-                            <span className="vq-error-text">{errors.consent}</span>
-                          )}
+                          {errors.consent && <span className="vq-error-text">{errors.consent}</span>}
                         </div>
                       )}
 
-                      {/* Elevated Blue Action Buttons (Liquid Button from animate-ui) */}
-                      <div style={{ paddingTop: '4px' }}>
+                      {/* Card Action Buttons */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
                         {step < 4 ? (
                           <LiquidButton
                             type="button"
                             onClick={handleNext}
-                            variant="primary"
                             icon={<ArrowRight size={15} />}
                             className="w-full py-3 text-sm font-bold"
                           >
@@ -1236,50 +1247,40 @@ export default function App() {
                         ) : (
                           <LiquidButton
                             type="submit"
-                            disabled={isSubmitting}
                             loading={isSubmitting}
-                            variant="primary"
-                            icon={<CheckCircle2 size={15} />}
-                            className="w-full py-3 text-sm font-bold"
+                            icon={<Check size={16} />}
+                            className="w-full py-3.5 text-sm font-bold"
                           >
-                            Submit Registration
+                            Submit Pre-Launch Registration
                           </LiquidButton>
                         )}
 
-                        {/* Back Button */}
                         {step > 1 && (
                           <button
                             type="button"
                             onClick={handleBack}
                             style={{
-                              width: '100%', padding: '6px', fontSize: '12px', fontWeight: 700,
-                              color: '#64748B', background: 'none', border: 'none', cursor: 'pointer',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', marginTop: '3px'
+                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                              fontSize: '12px', fontWeight: 700, color: '#64748B', background: 'none', border: 'none',
+                              cursor: 'pointer', padding: '4px'
                             }}
                           >
                             <ArrowLeft size={13} />
                             <span>Back to previous step</span>
                           </button>
                         )}
-
-                        {/* Security Footer Note */}
-                        <div style={{
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                          fontSize: '11px', color: '#94A3B8', marginTop: '8px', userSelect: 'none'
-                        }}>
-                          <ShieldCheck size={13} style={{ color: '#0284C7' }} />
-                          <span>Our team will contact you within 24 hours</span>
-                        </div>
                       </div>
+
                     </motion.form>
                   </div>
                 )}
+
               </div>
             </BorderGlow>
           </div>
-
         </motion.div>
       </div>
+
     </div>
   );
 }
