@@ -3,50 +3,64 @@ import confetti from 'canvas-confetti';
 import { API_BASE_URL, WHATSAPP_SUPPORT_PHONE } from './config';
 
 const STEP_INFO = {
-  1: { title: 'Personal Details', sub: 'Enter your basic contact information' },
-  2: { title: 'Medical Credentials', sub: 'Qualifications & council registration' },
-  3: { title: 'Practice & Services', sub: 'Clinic details & consultation setup' },
-  4: { title: 'Review & Submit', sub: 'Confirm your details to get early access' },
+  1: { title: 'Doctor Information', sub: 'Personal details & contact preferences' },
+  2: { title: 'Professional Credentials', sub: 'Medical qualification, registration & specialty' },
+  3: { title: 'Practice & Service Preferences', sub: 'Hospital/clinic details & Vorqard features' },
+  4: { title: 'Review & Declaration', sub: 'Confirm details and consent for onboarding' },
 };
+
+const VORQARD_FEATURES_OPTIONS = [
+  'Appointment management',
+  'Online consultations',
+  'Patient communication',
+  'Digital prescriptions / consultation notes',
+  'Reports / document management',
+  'AI-assisted booking and reminders'
+];
 
 export default function App() {
   const [step, setStep] = useState(1);
 
-  // ─── Form State (Preserved exactly as backend expects) ───────
+  // ─── Form State ───────────────────────────────────────────────
   const [formData, setFormData] = useState({
-    // Step 1: Doctor Profile
+    // Section 1 & 7: Doctor Information & Communication
     fullName: '',
     phone: '',
     email: '',
     gender: '',
     dob: '',
     preferredComm: 'WhatsApp',
+    contactBeforeLaunch: true,
 
-    // Step 2: Credentials
-    specialty: '',
-    experienceYears: '',
-    designation: '',
+    // Section 2 & 6: Professional Information
+    qualification: '',
     medicalRegNo: '',
     stateCouncil: '',
-    qualification: '',
-    collegeName: '',
+    specialty: '',
+    subSpecialty: '',
+    experienceYears: '',
+    designation: '',
     languages: '',
-    state: '',
 
-    // Step 3: Practice Info
+    // Section 3, 4 & 5: Practice & Preferences
     hospitalName: '',
+    pincode: '',
     city: '',
+    state: '',
     clinicAddress: '',
-    consultationFee: '',
-    consultationTypes: ['In-person', 'Online Video'],
+    consultationTypes: ['In-person consultation', 'Online consultation'],
     featuresInterest: [
-      'Smart Digital Prescriptions',
-      'OPD Queue Token Management',
-      'Online Teleconsultations',
-      'AI Patient EMR & Health Summaries'
+      'Appointment management',
+      'Online consultations',
+      'Patient communication',
+      'Digital prescriptions / consultation notes',
+      'Reports / document management',
+      'AI-assisted booking and reminders'
     ],
+    dailyConsultations: '',
+    additionalComments: '',
 
-    // Step 4: Consent
+    // Section 8: Declaration & Consent
     consent: true
   });
 
@@ -54,6 +68,8 @@ export default function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState('');
   const [registeredData, setRegisteredData] = useState(null);
+  const [pincodeLoading, setPincodeLoading] = useState(false);
+  const [pincodeStatus, setPincodeStatus] = useState('');
 
   // ─── Handle Input Changes ────────────────────────────────────
   const handleChange = (e) => {
@@ -91,6 +107,50 @@ export default function App() {
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: '' }));
   };
 
+  // ─── Auto-fill Location via Postal / PIN Code ─────────────────
+  const handlePincodeChange = async (e) => {
+    const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+    setFormData((prev) => ({ ...prev, pincode: val }));
+
+    if (val.length === 6) {
+      setPincodeLoading(true);
+      setPincodeStatus('Fetching location...');
+      try {
+        const res = await fetch(`https://api.postalpincode.in/pincode/${val}`);
+        const data = await res.json();
+        if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice && data[0].PostOffice.length > 0) {
+          const po = data[0].PostOffice[0];
+          const fetchedCity = po.District || po.Block || po.Circle || '';
+          const fetchedState = po.State || '';
+          const fetchedArea = po.Name || '';
+
+          setFormData((prev) => ({
+            ...prev,
+            city: fetchedCity || prev.city,
+            state: fetchedState || prev.state,
+            clinicAddress: prev.clinicAddress ? prev.clinicAddress : fetchedArea
+          }));
+          setPincodeStatus(`✓ ${fetchedCity}, ${fetchedState}`);
+          setErrors((prev) => {
+            const next = { ...prev };
+            delete next.city;
+            delete next.state;
+            return next;
+          });
+        } else {
+          setPincodeStatus('PIN code not found, enter location manually');
+        }
+      } catch (err) {
+        console.warn('PIN code lookup error:', err);
+        setPincodeStatus('');
+      } finally {
+        setPincodeLoading(false);
+      }
+    } else {
+      setPincodeStatus('');
+    }
+  };
+
   // ─── Step 1 Validation ──────────────────────────────────────
   const validateStep1 = () => {
     const errs = {};
@@ -121,12 +181,7 @@ export default function App() {
       errs.email = 'Enter a valid email address.';
     }
 
-    // 4. Gender: required
-    if (!formData.gender) {
-      errs.gender = 'Please select gender.';
-    }
-
-    // 5. Preferred Communication: required
+    // 4. Preferred Communication: required
     if (!formData.preferredComm) {
       errs.preferredComm = 'Please select preferred communication.';
     }
@@ -135,38 +190,39 @@ export default function App() {
     return Object.keys(errs).length === 0;
   };
 
+  // ─── Step 2 Validation (Medical Reg No is NOT mandatory) ─────
   const validateStep2 = () => {
     const errs = {};
-    if (!formData.specialty)
-      errs.specialty = 'Select your specialization';
-    if (formData.experienceYears === '' || isNaN(formData.experienceYears) || parseInt(formData.experienceYears, 10) < 0)
-      errs.experienceYears = 'Enter years of experience';
-    if (!formData.medicalRegNo.trim())
-      errs.medicalRegNo = 'Medical Council Reg. No. is required';
     if (!formData.qualification.trim())
-      errs.qualification = 'Degrees/qualifications required';
-    if (!formData.state.trim())
-      errs.state = 'State of practice is required';
+      errs.qualification = 'Highest medical qualification is required (e.g. MBBS, MD)';
+    if (!formData.specialty)
+      errs.specialty = 'Please select your specialization';
+    if (formData.experienceYears === '' || isNaN(formData.experienceYears) || parseInt(formData.experienceYears, 10) < 0)
+      errs.experienceYears = 'Enter total years of professional experience';
 
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
+  // ─── Step 3 Validation ──────────────────────────────────────
   const validateStep3 = () => {
     const errs = {};
     if (!formData.hospitalName.trim())
       errs.hospitalName = 'Hospital or clinic name is required';
     if (!formData.city.trim())
       errs.city = 'City is required';
+    if (!formData.state.trim())
+      errs.state = 'State is required';
 
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
+  // ─── Step 4 Validation ──────────────────────────────────────
   const validateStep4 = () => {
     const errs = {};
     if (!formData.consent)
-      errs.consent = 'Please accept consent to proceed';
+      errs.consent = 'Please confirm the declaration & consent to proceed.';
 
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -195,23 +251,33 @@ export default function App() {
       full_name: formData.fullName.trim(),
       phone: formData.phone.replace(/[^\d]/g, ''),
       email: formData.email.trim().toLowerCase(),
-      gender: formData.gender,
-      dob: formData.dob.trim() || null,
-      medical_reg_no: formData.medicalRegNo.trim(),
+      gender: formData.gender || null,
+      dob: formData.dob ? formData.dob.trim() : null,
+      medical_reg_no: formData.medicalRegNo ? formData.medicalRegNo.trim() : null,
       state_medical_council: formData.stateCouncil.trim() || null,
       qualification: formData.qualification.trim(),
-      specialty: formData.specialty,
+      specialty: formData.subSpecialty.trim()
+        ? `${formData.specialty} (${formData.subSpecialty.trim()})`
+        : formData.specialty,
       experience_years: parseInt(formData.experienceYears, 10) || 0,
       current_designation: formData.designation.trim() || null,
       hospital_clinic_name: formData.hospitalName.trim(),
       clinic_address: formData.clinicAddress.trim() || null,
       city: formData.city.trim(),
       state: formData.state.trim(),
-      consultation_types: formData.consultationTypes.length ? formData.consultationTypes : ['In-person'],
-      consultation_fee: formData.consultationFee ? parseInt(formData.consultationFee, 10) : null,
+      pincode: formData.pincode.trim() || null,
+      consultation_types: formData.consultationTypes.length ? formData.consultationTypes : ['In-person consultation', 'Online consultation'],
+      consultation_fee: null,
       languages_spoken: formData.languages ? formData.languages.split(',').map((s) => s.trim()).filter(Boolean) : [],
       interested_features: formData.featuresInterest,
-      notes: `Preferred comm: ${formData.preferredComm || 'WhatsApp'}`
+      notes: [
+        `Contact before launch: ${formData.contactBeforeLaunch ? 'Yes' : 'No'}`,
+        `Preferred contact: ${formData.preferredComm || 'WhatsApp'}`,
+        formData.subSpecialty ? `Sub-specialty: ${formData.subSpecialty.trim()}` : '',
+        formData.stateCouncil ? `Council: ${formData.stateCouncil.trim()}` : '',
+        formData.dailyConsultations ? `Daily capacity: ${formData.dailyConsultations} consultations/day` : '',
+        formData.additionalComments ? `Comments: ${formData.additionalComments.trim()}` : ''
+      ].filter(Boolean).join(' | ')
     };
 
     try {
@@ -232,11 +298,11 @@ export default function App() {
         setRegisteredData(result);
         triggerConfetti();
       } else {
-        setServerError(result.detail || 'Registration failed. Please check your details.');
+        setServerError(result.detail || 'Registration failed. Please check your details and try again.');
       }
     } catch (err) {
       console.error('[Doctor Registry] Network error:', err);
-      setServerError('Unable to connect to VORQARD server. Please ensure backend is running.');
+      setServerError('Unable to connect to VORQARD server. Please ensure the backend is running.');
     } finally {
       setIsSubmitting(false);
     }
@@ -255,15 +321,22 @@ export default function App() {
 
   const handleReset = () => {
     setFormData({
-      fullName: '', phone: '', email: '', gender: '', dob: '', preferredComm: 'WhatsApp',
-      specialty: '', experienceYears: '', designation: '',
-      medicalRegNo: '', stateCouncil: '', qualification: '', collegeName: '', languages: '', state: '',
-      hospitalName: '', city: '', clinicAddress: '', consultationFee: '',
-      consultationTypes: ['In-person', 'Online Video'],
-      featuresInterest: ['Smart Digital Prescriptions','OPD Queue Token Management','Online Teleconsultations','AI Patient EMR & Health Summaries'],
+      fullName: '', phone: '', email: '', gender: '', dob: '', preferredComm: 'WhatsApp', contactBeforeLaunch: true,
+      qualification: '', medicalRegNo: '', stateCouncil: '', specialty: '', subSpecialty: '', experienceYears: '', designation: '', languages: '',
+      hospitalName: '', pincode: '', city: '', state: '', clinicAddress: '',
+      consultationTypes: ['In-person consultation', 'Online consultation'],
+      featuresInterest: [
+        'Appointment management',
+        'Online consultations',
+        'Patient communication',
+        'Digital prescriptions / consultation notes',
+        'Reports / document management',
+        'AI-assisted booking and reminders'
+      ],
+      dailyConsultations: '', additionalComments: '',
       consent: true
     });
-    setErrors({}); setRegisteredData(null); setServerError(''); setStep(1);
+    setErrors({}); setRegisteredData(null); setServerError(''); setStep(1); setPincodeStatus('');
   };
 
   return (
@@ -340,7 +413,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* ─────────── RIGHT COLUMN: Compact Focused Card ─────────── */}
+          {/* ─────────── RIGHT COLUMN: Pre-Launch Form Card ─────────── */}
           <div className="vq-right-container">
             <div className="vq-form-card">
 
@@ -348,29 +421,17 @@ export default function App() {
                 /* ══ SUCCESS VIEW ══ */
                 <div className="vq-success-view">
                   <div className="vq-success-badge"><i className="fa-solid fa-check"></i></div>
-                  <h3>Registration Confirmed! 🎉</h3>
-                  <p>Thank you, <strong>Dr. {formData.fullName}</strong>. You have secured VIP priority onboarding with Vorqard Doctor App.</p>
+                  <h3>Pre-Launch Registration Confirmed! 🎉</h3>
+                  <p>Thank you, <strong>Dr. {formData.fullName}</strong>. You have secured VIP priority early access with the Vorqard Doctor Network.</p>
 
                   <div className="vq-reg-code-box">
                     <div className="code-lbl">Your Reference Code</div>
                     <div className="code-val">{registeredData.reg_code}</div>
                   </div>
-
-                  <a
-                    href={`https://wa.me/${WHATSAPP_SUPPORT_PHONE}?text=${encodeURIComponent(`Hi VORQARD Team, I am Dr. ${formData.fullName} (${registeredData.reg_code}). I registered for Doctor App Early Access.`)}`}
-                    target="_blank" rel="noreferrer"
-                    className="vq-btn-whatsapp-full"
-                  >
-                    <i className="fa-brands fa-whatsapp"></i> Chat with Onboarding Team
-                  </a>
-
-                  <button type="button" className="vq-btn-back-link" onClick={handleReset}>
-                    <i className="fa-solid fa-rotate-left"></i> Register another doctor
-                  </button>
                 </div>
 
               ) : (
-                /* ══ COMPACT STEP WIZARD FORM ══ */
+                /* ══ 4-STEP WIZARD FORM ══ */
                 <form onSubmit={handleSubmit} noValidate>
 
                   {/* Card Header & Stepper */}
@@ -400,7 +461,7 @@ export default function App() {
                     </div>
                   )}
 
-                  {/* ─── STEP 1: Personal Details ─── */}
+                  {/* ─── STEP 1: Doctor Information (Section 1 & 7) ─── */}
                   {step === 1 && (
                     <div className="vq-form-fields">
                       <div className="vq-control">
@@ -416,7 +477,15 @@ export default function App() {
                       <div className="vq-control">
                         <label className="vq-label" htmlFor="phone">Mobile Number <span className="vq-req">*</span></label>
                         <div className="vq-input-box">
-                          <span className="vq-phone-flag">🇮🇳 +91</span>
+                          <div className="vq-phone-flag-box">
+                            <svg className="vq-flag-svg" viewBox="0 0 24 16" fill="none">
+                              <rect width="24" height="5.33" fill="#FF9933"/>
+                              <rect y="5.33" width="24" height="5.33" fill="#FFFFFF"/>
+                              <rect y="10.66" width="24" height="5.33" fill="#138808"/>
+                              <circle cx="12" cy="8" r="2.2" fill="#000080"/>
+                            </svg>
+                            <span className="vq-phone-code">+91</span>
+                          </div>
                           <input
                             type="tel" id="phone"
                             className={`vq-text-input has-prefix ${errors.phone ? 'err' : ''}`}
@@ -439,25 +508,24 @@ export default function App() {
 
                       <div className="vq-grid-2">
                         <div className="vq-control">
-                          <label className="vq-label" htmlFor="gender">Gender <span className="vq-req">*</span></label>
+                          <label className="vq-label" htmlFor="gender">Gender</label>
                           <div className="vq-select-box">
-                            <select id="gender" className={`vq-select-input ${errors.gender ? 'err' : ''}`} value={formData.gender} onChange={handleChange}>
-                              <option value="" disabled>Select</option>
+                            <select id="gender" className="vq-select-input" value={formData.gender} onChange={handleChange}>
+                              <option value="">Select Gender</option>
                               <option value="Male">Male</option>
                               <option value="Female">Female</option>
                               <option value="Other">Other</option>
                             </select>
                             <i className="fa-solid fa-chevron-down vq-select-chevron"></i>
                           </div>
-                          <span className="vq-error-msg">{errors.gender}</span>
                         </div>
 
                         <div className="vq-control">
-                          <label className="vq-label" htmlFor="preferredComm">Preferred Comm.</label>
+                          <label className="vq-label" htmlFor="preferredComm">Preferred Contact <span className="vq-req">*</span></label>
                           <div className="vq-select-box">
                             <select id="preferredComm" className="vq-select-input" value={formData.preferredComm} onChange={handleChange}>
                               <option value="WhatsApp">WhatsApp</option>
-                              <option value="Phone Call">Phone Call</option>
+                              <option value="Phone call">Phone call</option>
                               <option value="Email">Email</option>
                             </select>
                             <i className="fa-solid fa-chevron-down vq-select-chevron"></i>
@@ -467,24 +535,53 @@ export default function App() {
                     </div>
                   )}
 
-                  {/* ─── STEP 2: Medical Credentials ─── */}
+                  {/* ─── STEP 2: Professional Information (Section 2 & 6) ─── */}
                   {step === 2 && (
                     <div className="vq-form-fields">
+                      <div className="vq-grid-2">
+                        <div className="vq-control">
+                          <label className="vq-label" htmlFor="qualification">Highest Medical Qualification <span className="vq-req">*</span></label>
+                          <input
+                            type="text" id="qualification"
+                            className={`vq-text-input ${errors.qualification ? 'err' : ''}`}
+                            value={formData.qualification} onChange={handleChange}
+                          />
+                          <span className="vq-error-msg">{errors.qualification}</span>
+                        </div>
+
+                        <div className="vq-control">
+                          <label className="vq-label" htmlFor="medicalRegNo">Medical Registration Number</label>
+                          <input
+                            type="text" id="medicalRegNo"
+                            className="vq-text-input"
+                            value={formData.medicalRegNo} onChange={handleChange}
+                          />
+                        </div>
+                      </div>
+
                       <div className="vq-grid-2">
                         <div className="vq-control">
                           <label className="vq-label" htmlFor="specialty">Specialization <span className="vq-req">*</span></label>
                           <div className="vq-select-box">
                             <select id="specialty" className={`vq-select-input ${errors.specialty ? 'err' : ''}`} value={formData.specialty} onChange={handleChange}>
-                              <option value="" disabled>Select</option>
+                              <option value="" disabled>Select Specialization</option>
                               <option value="General Medicine">General Medicine</option>
                               <option value="Cardiology">Cardiology</option>
                               <option value="Orthopedics">Orthopedics</option>
                               <option value="Dermatology">Dermatology</option>
                               <option value="Pediatrics">Pediatrics</option>
-                              <option value="Gynecology & Obstetrics">Gynecology</option>
+                              <option value="Gynecology & Obstetrics">Gynecology & Obstetrics</option>
                               <option value="Neurology">Neurology</option>
                               <option value="ENT">ENT</option>
                               <option value="Ophthalmology">Ophthalmology</option>
+                              <option value="Psychiatry">Psychiatry</option>
+                              <option value="Gastroenterology">Gastroenterology</option>
+                              <option value="Pulmonology">Pulmonology</option>
+                              <option value="Oncology">Oncology</option>
+                              <option value="Urology">Urology</option>
+                              <option value="Endocrinology">Endocrinology</option>
+                              <option value="Dentistry">Dentistry</option>
+                              <option value="Ayurveda / Homeopathy">Ayurveda / Homeopathy</option>
                               <option value="Other">Other</option>
                             </select>
                             <i className="fa-solid fa-chevron-down vq-select-chevron"></i>
@@ -493,7 +590,7 @@ export default function App() {
                         </div>
 
                         <div className="vq-control">
-                          <label className="vq-label" htmlFor="experienceYears">Experience (Years) <span className="vq-req">*</span></label>
+                          <label className="vq-label" htmlFor="experienceYears">Years of Experience <span className="vq-req">*</span></label>
                           <input
                             type="number" id="experienceYears"
                             className={`vq-text-input ${errors.experienceYears ? 'err' : ''}`}
@@ -504,61 +601,76 @@ export default function App() {
                         </div>
                       </div>
 
-                      <div className="vq-control">
-                        <label className="vq-label" htmlFor="medicalRegNo">Medical Council Reg. No. <span className="vq-req">*</span></label>
-                        <input
-                          type="text" id="medicalRegNo"
-                          className={`vq-text-input ${errors.medicalRegNo ? 'err' : ''}`}
-                          value={formData.medicalRegNo} onChange={handleChange}
-                        />
-                        <span className="vq-error-msg">{errors.medicalRegNo}</span>
+                      <div className="vq-grid-2">
+                        <div className="vq-control">
+                          <label className="vq-label" htmlFor="subSpecialty">Sub-specialization (if applicable)</label>
+                          <input
+                            type="text" id="subSpecialty"
+                            className="vq-text-input"
+                            value={formData.subSpecialty} onChange={handleChange}
+                          />
+                        </div>
+
+                        <div className="vq-control">
+                          <label className="vq-label" htmlFor="stateCouncil">State / Medical Council</label>
+                          <input
+                            type="text" id="stateCouncil"
+                            className="vq-text-input"
+                            value={formData.stateCouncil} onChange={handleChange}
+                          />
+                        </div>
                       </div>
 
                       <div className="vq-grid-2">
                         <div className="vq-control">
-                          <label className="vq-label" htmlFor="qualification">Qualifications <span className="vq-req">*</span></label>
+                          <label className="vq-label" htmlFor="designation">Designation</label>
                           <input
-                            type="text" id="qualification"
-                            className={`vq-text-input ${errors.qualification ? 'err' : ''}`}
-                            value={formData.qualification} onChange={handleChange}
+                            type="text" id="designation"
+                            className="vq-text-input"
+                            value={formData.designation} onChange={handleChange}
                           />
-                          <span className="vq-error-msg">{errors.qualification}</span>
                         </div>
 
                         <div className="vq-control">
-                          <label className="vq-label" htmlFor="state">State <span className="vq-req">*</span></label>
+                          <label className="vq-label" htmlFor="languages">Languages Spoken</label>
                           <input
-                            type="text" id="state"
-                            className={`vq-text-input ${errors.state ? 'err' : ''}`}
-                            value={formData.state} onChange={handleChange}
+                            type="text" id="languages"
+                            className="vq-text-input"
+                            value={formData.languages} onChange={handleChange}
                           />
-                          <span className="vq-error-msg">{errors.state}</span>
                         </div>
-                      </div>
-
-                      <div className="vq-control">
-                        <label className="vq-label" htmlFor="designation">Current Designation</label>
-                        <input
-                          type="text" id="designation"
-                          className="vq-text-input"
-                          value={formData.designation} onChange={handleChange}
-                        />
                       </div>
                     </div>
                   )}
 
-                  {/* ─── STEP 3: Practice & Services ─── */}
+                  {/* ─── STEP 3: Practice & Service Preferences (Section 3, 4 & 5) ─── */}
                   {step === 3 && (
                     <div className="vq-form-fields">
+                      <div className="vq-control">
+                        <label className="vq-label" htmlFor="hospitalName">Hospital / Clinic Name <span className="vq-req">*</span></label>
+                        <input
+                          type="text" id="hospitalName"
+                          className={`vq-text-input ${errors.hospitalName ? 'err' : ''}`}
+                          value={formData.hospitalName} onChange={handleChange}
+                        />
+                        <span className="vq-error-msg">{errors.hospitalName}</span>
+                      </div>
+
                       <div className="vq-grid-2">
                         <div className="vq-control">
-                          <label className="vq-label" htmlFor="hospitalName">Hospital / Clinic <span className="vq-req">*</span></label>
+                          <label className="vq-label" htmlFor="pincode">Postal / PIN Code</label>
                           <input
-                            type="text" id="hospitalName"
-                            className={`vq-text-input ${errors.hospitalName ? 'err' : ''}`}
-                            value={formData.hospitalName} onChange={handleChange}
+                            type="text" id="pincode"
+                            className="vq-text-input"
+                            maxLength={6}
+                            value={formData.pincode}
+                            onChange={handlePincodeChange}
                           />
-                          <span className="vq-error-msg">{errors.hospitalName}</span>
+                          {pincodeStatus && (
+                            <span className={`vq-pincode-status ${pincodeStatus.startsWith('✓') ? 'success' : pincodeLoading ? 'loading' : 'error'}`}>
+                              {pincodeStatus}
+                            </span>
+                          )}
                         </div>
 
                         <div className="vq-control">
@@ -572,79 +684,113 @@ export default function App() {
                         </div>
                       </div>
 
-                      <div className="vq-control">
-                        <label className="vq-label" htmlFor="clinicAddress">Clinic Address</label>
-                        <input
-                          type="text" id="clinicAddress"
-                          className="vq-text-input"
-                          value={formData.clinicAddress} onChange={handleChange}
-                        />
-                      </div>
-
-                      <div className="vq-control">
-                        <label className="vq-label" htmlFor="consultationFee">Approx. Consultation Fee</label>
-                        <div className="vq-input-box">
-                          <span className="vq-currency-rs">₹</span>
+                      <div className="vq-grid-2">
+                        <div className="vq-control">
+                          <label className="vq-label" htmlFor="state">State <span className="vq-req">*</span></label>
                           <input
-                            type="number" id="consultationFee"
-                            className="vq-text-input has-rs"
-                            min="0"
-                            value={formData.consultationFee} onChange={handleChange}
+                            type="text" id="state"
+                            className={`vq-text-input ${errors.state ? 'err' : ''}`}
+                            value={formData.state} onChange={handleChange}
+                          />
+                          <span className="vq-error-msg">{errors.state}</span>
+                        </div>
+
+                        <div className="vq-control">
+                          <label className="vq-label" htmlFor="clinicAddress">Practice Location / Area</label>
+                          <input
+                            type="text" id="clinicAddress"
+                            className="vq-text-input"
+                            value={formData.clinicAddress} onChange={handleChange}
                           />
                         </div>
                       </div>
 
                       <div className="vq-control">
-                        <label className="vq-label">Consultation Modes</label>
+                        <label className="vq-label">Preferred Consultation Mode</label>
                         <div className="vq-mode-pills">
                           <label className="vq-mode-pill">
                             <input
-                              type="checkbox" name="consultationTypes" value="In-person"
-                              checked={formData.consultationTypes.includes('In-person')} onChange={handleChange}
+                              type="checkbox" name="consultationTypes" value="In-person consultation"
+                              checked={formData.consultationTypes.includes('In-person consultation')} onChange={handleChange}
                             />
-                            <span>In-Person OPD</span>
+                            <span>In-person</span>
                           </label>
                           <label className="vq-mode-pill">
                             <input
-                              type="checkbox" name="consultationTypes" value="Online Video"
-                              checked={formData.consultationTypes.includes('Online Video')} onChange={handleChange}
+                              type="checkbox" name="consultationTypes" value="Online consultation"
+                              checked={formData.consultationTypes.includes('Online consultation')} onChange={handleChange}
                             />
-                            <span>Video Consult</span>
+                            <span>Online</span>
                           </label>
+                        </div>
+                      </div>
+
+                      <div className="vq-control">
+                        <label className="vq-label">Features / Services You Are Interested In</label>
+                        <div className="vq-feat-grid-compact">
+                          {VORQARD_FEATURES_OPTIONS.map((feat) => (
+                            <label key={feat} className="vq-check-card">
+                              <input
+                                type="checkbox" name="featuresInterest" value={feat}
+                                checked={formData.featuresInterest.includes(feat)} onChange={handleChange}
+                              />
+                              <span>{feat}</span>
+                            </label>
+                          ))}
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {/* ─── STEP 4: Review & Confirm ─── */}
+                  {/* ─── STEP 4: Review, Verification & Declaration (Section 8 & Consent) ─── */}
                   {step === 4 && (
                     <div className="vq-form-fields">
+                      {/* Verification Notice Banner */}
+                      <div style={{
+                        background: '#EFF6FF',
+                        border: '1px solid #BFDBFE',
+                        borderRadius: '10px',
+                        padding: '10px 12px',
+                        fontSize: '11.5px',
+                        color: '#1E40AF',
+                        lineHeight: '1.4',
+                        display: 'flex',
+                        gap: '8px'
+                      }}>
+                        <i className="fa-solid fa-shield-halved" style={{ fontSize: '14px', marginTop: '2px', color: '#2563EB' }}></i>
+                        <div>
+                          <strong>Verification during onboarding:</strong> Professional verification documents (Medical registration & Qualifications) will be verified securely during platform onboarding.
+                        </div>
+                      </div>
+
+                      {/* Doctor Profile Summary Card */}
                       <div className="vq-review-card">
                         <div className="vq-review-row">
                           <span className="lbl">Doctor Name:</span>
                           <span className="val">Dr. {formData.fullName}</span>
                         </div>
                         <div className="vq-review-row">
-                          <span className="lbl">Mobile:</span>
-                          <span className="val">+91 {formData.phone}</span>
+                          <span className="lbl">Mobile & Email:</span>
+                          <span className="val">+91 {formData.phone} | {formData.email}</span>
                         </div>
                         <div className="vq-review-row">
-                          <span className="lbl">Specialty:</span>
-                          <span className="val">{formData.specialty} ({formData.experienceYears} Yrs)</span>
+                          <span className="lbl">Qualification:</span>
+                          <span className="val">{formData.qualification} {formData.medicalRegNo ? `(${formData.medicalRegNo})` : ''}</span>
                         </div>
                         <div className="vq-review-row">
-                          <span className="lbl">Reg No:</span>
-                          <span className="val">{formData.medicalRegNo}</span>
+                          <span className="lbl">Specialization:</span>
+                          <span className="val">{formData.specialty} ({formData.experienceYears} Yrs Exp)</span>
                         </div>
                         <div className="vq-review-row">
-                          <span className="lbl">Clinic / City:</span>
-                          <span className="val">{formData.hospitalName}, {formData.city}</span>
+                          <span className="lbl">Workplace:</span>
+                          <span className="val">{formData.hospitalName}, {formData.city}, {formData.state}</span>
                         </div>
                       </div>
 
+                      {/* Declaration & Consent Checkbox */}
                       <label className="vq-consent-box">
                         <input type="checkbox" id="consent" checked={formData.consent} onChange={handleChange} />
-                        <span>I confirm that the details provided are accurate and agree to receive onboarding updates from Vorqard.</span>
+                        <span>I confirm that the information provided is accurate to the best of my knowledge. I agree that Vorqard / Abhivorn Technologies may contact me regarding doctor onboarding and platform launch information.</span>
                       </label>
                       <span className="vq-error-msg">{errors.consent}</span>
                     </div>
@@ -663,7 +809,7 @@ export default function App() {
                           <span>Submitting Registration...</span>
                         ) : (
                           <>
-                            <span>Submit Registration</span>
+                            <span>Submit Pre-Launch Registration</span>
                             <i className="fa-solid fa-circle-check"></i>
                           </>
                         )}
@@ -676,11 +822,6 @@ export default function App() {
                         <span>Back to previous step</span>
                       </button>
                     )}
-
-                    <div className="vq-card-footer-note">
-                      <i className="fa-solid fa-shield-halved"></i>
-                      <span>Our team will contact you within 24 hours</span>
-                    </div>
                   </div>
 
                 </form>
