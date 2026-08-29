@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
-import { API_BASE_URL, WHATSAPP_SUPPORT_PHONE } from './config';
+import { API_BASE_URL, MAIN_WEBSITE_URL, PINCODE_API_URL } from './config';
 
 const STEP_INFO = {
   1: { title: 'Doctor Information', sub: 'Personal details & contact preferences' },
@@ -116,7 +116,7 @@ export default function App() {
       setPincodeLoading(true);
       setPincodeStatus('Fetching location...');
       try {
-        const res = await fetch(`https://api.postalpincode.in/pincode/${val}`);
+        const res = await fetch(`${PINCODE_API_URL}/${val}`);
         const data = await res.json();
         if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice && data[0].PostOffice.length > 0) {
           const po = data[0].PostOffice[0];
@@ -345,11 +345,11 @@ export default function App() {
       {/* ══════════════ HEADER ══════════════ */}
       <header className="vq-header">
         <div className="vq-header-inner">
-          <a className="vq-brand" href="https://www.vorqard.com/">
+          <a className="vq-brand" href={MAIN_WEBSITE_URL}>
             <img src="/logo.png" alt="Vorqard" className="vq-brand-logo" />
           </a>
           <a
-            href="https://www.vorqard.com/"
+            href={MAIN_WEBSITE_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="vq-explore-btn"
