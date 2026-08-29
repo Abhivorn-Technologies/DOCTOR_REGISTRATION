@@ -27,7 +27,7 @@ import {
   AlertCircle,
   Video
 } from 'lucide-react';
-import { API_BASE_URL, WHATSAPP_SUPPORT_PHONE } from './config';
+import { API_BASE_URL, MAIN_WEBSITE_URL, PINCODE_API_URL } from './config';
 import BorderGlow from './components/BorderGlow';
 import LiquidButton from './components/LiquidButton';
 import AnimatedTabs from './components/AnimatedTabs';
@@ -99,6 +99,8 @@ export default function App() {
   const [serverError, setServerError] = useState('');
   const [registeredData, setRegisteredData] = useState(null);
   const [shakeCount, setShakeCount] = useState(0);
+  const [pincodeLoading, setPincodeLoading] = useState(false);
+  const [pincodeStatus, setPincodeStatus] = useState('');
 
   const triggerBuzz = () => {
     setShakeCount((prev) => prev + 1);
