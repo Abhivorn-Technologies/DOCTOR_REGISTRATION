@@ -3,10 +3,14 @@
  * Reads dynamically from Vite .env environment variables with defaults.
  */
 
+const isLocalhost = 
+  typeof window !== 'undefined' && 
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
 export const API_BASE_URL = 
   import.meta.env.VITE_API_BASE_URL || 
   import.meta.env.VITE_DOCTOR_API_BASE_URL || 
-  (typeof window !== 'undefined' && window.location.origin.includes(':8000') ? window.location.origin : 'http://127.0.0.1:8000');
+  (isLocalhost ? 'http://127.0.0.1:8000' : 'https://api.vorqard.com');
 
 export const MAIN_WEBSITE_URL = 
   import.meta.env.VITE_MAIN_WEBSITE_URL || 
