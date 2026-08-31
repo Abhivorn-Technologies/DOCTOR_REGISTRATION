@@ -24,8 +24,8 @@ export default function AnimatedTabs({
       style={{
         width: '100%',
         background: '#F1F5F9',
-        padding: '6px',
-        borderRadius: '18px',
+        padding: '4px',
+        borderRadius: '16px',
         border: '1px solid #E2E8F0',
       }}
       className={className}
@@ -34,7 +34,7 @@ export default function AnimatedTabs({
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-          gap: '6px',
+          gap: '4px',
           position: 'relative',
         }}
       >
@@ -59,11 +59,9 @@ export default function AnimatedTabs({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '8px',
-                padding: '10px 6px',
-                borderRadius: '14px',
-                fontSize: '13px',
-                fontWeight: 700,
+                gap: '6px',
+                padding: '8px 4px',
+                borderRadius: '12px',
                 border: 'none',
                 background: 'transparent',
                 cursor: stepNum <= currentStep || isDone ? 'pointer' : 'not-allowed',
@@ -85,9 +83,9 @@ export default function AnimatedTabs({
                   style={{
                     position: 'absolute',
                     inset: 0,
-                    borderRadius: '14px',
+                    borderRadius: '12px',
                     background: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
-                    boxShadow: '0 4px 16px rgba(2, 132, 199, 0.38), 0 1px 3px rgba(0, 0, 0, 0.08)',
+                    boxShadow: '0 4px 14px rgba(2, 132, 199, 0.35), 0 1px 3px rgba(0, 0, 0, 0.08)',
                     zIndex: -1,
                   }}
                 />
@@ -96,13 +94,13 @@ export default function AnimatedTabs({
               {/* Step Icon / Number Badge */}
               <div
                 style={{
-                  width: '24px',
-                  height: '24px',
+                  width: '22px',
+                  height: '22px',
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '12px',
+                  fontSize: '11px',
                   fontWeight: 900,
                   flexShrink: 0,
                   transition: 'all 0.25s ease',
@@ -119,7 +117,7 @@ export default function AnimatedTabs({
                   boxShadow: isActive ? '0 1px 4px rgba(0,0,0,0.15)' : 'none',
                 }}
               >
-                {isDone ? <Check size={13} strokeWidth={3} /> : stepNum}
+                {isDone ? <Check size={12} strokeWidth={3} /> : stepNum}
               </div>
 
               {/* Step Short Title */}
@@ -128,9 +126,11 @@ export default function AnimatedTabs({
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
-                  fontSize: '12.5px',
+                  fontSize: '11.5px',
                   fontWeight: isActive ? 800 : 600,
+                  letterSpacing: '-0.01em',
                 }}
+                className="hidden min-[380px]:inline"
               >
                 {info.shortTitle || info.title.split(' ')[0]}
               </span>
@@ -141,3 +141,4 @@ export default function AnimatedTabs({
     </div>
   );
 }
+

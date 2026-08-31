@@ -391,43 +391,16 @@ export default function App() {
     <div className="vq-page-root">
 
       {/* ══════════════ HEADER ══════════════ */}
-      <header
-        style={{
-          width: '100%',
-          background: '#FFFFFF',
-          borderBottom: '1px solid #E2E8F0',
-          padding: '12px 32px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          zIndex: 50,
-          boxShadow: '0 1px 4px rgba(0,0,0,0.04)'
-        }}
-      >
+      <header className="vq-header">
         <a href={MAIN_WEBSITE_URL} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-          <img src="/logo.png" alt="Vorqard" style={{ height: '38px', width: 'auto', objectFit: 'contain' }} />
+          <img src="/logo.png" alt="Vorqard" className="vq-logo-img" />
         </a>
 
         <a
           href={MAIN_WEBSITE_URL}
           target="_blank"
           rel="noopener noreferrer"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '8px 20px',
-            borderRadius: '9999px',
-            background: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
-            border: 'none',
-            color: '#FFFFFF',
-            fontSize: '13px',
-            fontWeight: 700,
-            textDecoration: 'none',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            boxShadow: '0 3px 12px rgba(2, 132, 199, 0.28)'
-          }}
+          className="vq-header-btn"
         >
           <span>Explore More</span>
           <ArrowRight size={13} />
@@ -454,16 +427,16 @@ export default function App() {
           }}
         />
 
-        {/* Responsive 2-Column Container */}
+        {/* Responsive Container (2-Column on Desktop / Vertical Stack on Tablet & Mobile) */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           className="vq-container"
         >
-          {/* ─────────── LEFT HERO COLUMN: Why Join Vorqard Doctor? ─────────── */}
+          {/* ─────────── LEFT HERO COLUMN: Why Join Vorqard Doctor? (Vertical White Cards) ─────────── */}
           <div className="vq-hero-column">
-            <div>
+            <div className="vq-hero-header-wrap">
               <div className="vq-hero-badge">
                 <Sparkles size={14} className="text-[#0284C7]" />
                 <span>Doctor Pre-Launch Registration</span>
@@ -476,7 +449,7 @@ export default function App() {
               </p>
             </div>
 
-            {/* 5 Benefit Cards */}
+            {/* Benefit White Cards - Aligned Vertically */}
             <div className="vq-features-list">
               <div className="vq-feature-card">
                 <div className="vq-feature-icon-box">
@@ -533,7 +506,7 @@ export default function App() {
           {/* ─────────── RIGHT FORM CARD COLUMN ─────────── */}
           <div className="vq-card-column">
             <BorderGlow glowColor="#0284C7" secondaryGlow="#38BDF8" borderRadius="20px">
-              <div style={{ padding: '22px 26px', display: 'flex', flexDirection: 'column' }}>
+              <div className="vq-card-inner">
 
                 {registeredData ? (
                   /* ══ SUCCESS VIEW ══ */
@@ -577,12 +550,12 @@ export default function App() {
                     {/* Step Title Header */}
                     <div style={{ marginBottom: '10px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
-                        <h2 style={{ fontSize: '19px', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>
+                        <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>
                           {STEP_INFO[step].title}
                         </h2>
                         <span style={{
                           fontSize: '11px', fontWeight: 700, color: '#0284C7', background: '#E0F2FE',
-                          padding: '3px 9px', borderRadius: '9999px', border: '1px solid #BAE6FD'
+                          padding: '3px 9px', borderRadius: '9999px', border: '1px solid #BAE6FD', flexShrink: 0
                         }}>
                           Step {step} of 4
                         </span>
@@ -704,8 +677,8 @@ export default function App() {
                             {errors.email && <span className="vq-error-text">{errors.email}</span>}
                           </div>
 
-                          {/* Date of Birth & Gender (Optional as per Section 1) */}
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                          {/* Date of Birth & Gender (Responsive 2-Col / Vertical 1-Col) */}
+                          <div className="vq-form-grid-2">
                             <div>
                               <label className="vq-field-label">
                                 DATE OF BIRTH
@@ -746,8 +719,8 @@ export default function App() {
                             </div>
                           </div>
 
-                          {/* Preferred Contact Method & Contact Before Launch */}
-                          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '10px' }}>
+                          {/* Preferred Contact Method & Contact Before Launch (Responsive 2-Col / Vertical 1-Col) */}
+                          <div className="vq-form-grid-contact">
                             <div>
                               <label className="vq-field-label">
                                 PREFERRED CONTACT <span className="req">*</span>
@@ -791,7 +764,7 @@ export default function App() {
                       {/* ─── STEP 2: Professional Information (Section 2 & 6) ─── */}
                       {step === 2 && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '9px' }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                          <div className="vq-form-grid-2">
                             {/* Highest Qualification */}
                             <div>
                               <label className="vq-field-label">
@@ -834,7 +807,7 @@ export default function App() {
                             </div>
                           </div>
 
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                          <div className="vq-form-grid-2">
                             {/* Specialization */}
                             <div>
                               <label className="vq-field-label">
@@ -895,7 +868,7 @@ export default function App() {
                             </div>
                           </div>
 
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                          <div className="vq-form-grid-2">
                             {/* Sub-specialization */}
                             <div>
                               <label className="vq-field-label">
@@ -937,7 +910,7 @@ export default function App() {
                             </div>
                           </div>
 
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                          <div className="vq-form-grid-2">
                             {/* Designation */}
                             <div>
                               <label className="vq-field-label">
@@ -1015,7 +988,7 @@ export default function App() {
                           </div>
 
                           {/* Postal / PIN Code (Auto-fill) & City */}
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                          <div className="vq-form-grid-2">
                             <div>
                               <label className="vq-field-label">
                                 POSTAL / PIN CODE <span className="req">*</span>
@@ -1066,7 +1039,7 @@ export default function App() {
                             </div>
                           </div>
 
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                          <div className="vq-form-grid-2">
                             {/* State */}
                             <div>
                               <label className="vq-field-label">
@@ -1109,20 +1082,14 @@ export default function App() {
                             </div>
                           </div>
 
-                          {/* Preferred Consultation Mode */}
+                          {/* Preferred Consultation Mode (White boxes - Vertical on Tablet & Mobile) */}
                           <div>
                             <label className="vq-field-label">
                               PREFERRED CONSULTATION MODE
                             </label>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                            <div className="vq-consult-options-grid">
                               <label
-                                style={{
-                                  display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 12px',
-                                  borderRadius: '10px', border: formData.consultationTypes.includes('In-person consultation') ? '1.5px solid #0284C7' : '1px solid #CBD5E1',
-                                  background: formData.consultationTypes.includes('In-person consultation') ? '#F0F9FF' : '#FFFFFF',
-                                  color: formData.consultationTypes.includes('In-person consultation') ? '#0284C7' : '#475569',
-                                  fontSize: '12px', fontWeight: 600, cursor: 'pointer', userSelect: 'none', transition: 'all 0.2s ease'
-                                }}
+                                className={`vq-consult-card ${formData.consultationTypes.includes('In-person consultation') ? 'active' : ''}`}
                               >
                                 <input
                                   type="checkbox"
@@ -1130,19 +1097,13 @@ export default function App() {
                                   value="In-person consultation"
                                   checked={formData.consultationTypes.includes('In-person consultation')}
                                   onChange={handleChange}
-                                  style={{ accentColor: '#0284C7', width: '14px', height: '14px' }}
+                                  style={{ accentColor: '#0284C7', width: '15px', height: '15px' }}
                                 />
-                                <span>In-person</span>
+                                <span>In-person Consultation</span>
                               </label>
 
                               <label
-                                style={{
-                                  display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 12px',
-                                  borderRadius: '10px', border: formData.consultationTypes.includes('Online consultation') ? '1.5px solid #0284C7' : '1px solid #CBD5E1',
-                                  background: formData.consultationTypes.includes('Online consultation') ? '#F0F9FF' : '#FFFFFF',
-                                  color: formData.consultationTypes.includes('Online consultation') ? '#0284C7' : '#475569',
-                                  fontSize: '12px', fontWeight: 600, cursor: 'pointer', userSelect: 'none', transition: 'all 0.2s ease'
-                                }}
+                                className={`vq-consult-card ${formData.consultationTypes.includes('Online consultation') ? 'active' : ''}`}
                               >
                                 <input
                                   type="checkbox"
@@ -1150,29 +1111,23 @@ export default function App() {
                                   value="Online consultation"
                                   checked={formData.consultationTypes.includes('Online consultation')}
                                   onChange={handleChange}
-                                  style={{ accentColor: '#0284C7', width: '14px', height: '14px' }}
+                                  style={{ accentColor: '#0284C7', width: '15px', height: '15px' }}
                                 />
-                                <span>Online</span>
+                                <span>Online Consultation</span>
                               </label>
                             </div>
                           </div>
 
-                          {/* 6 Vorqard Features Checkboxes */}
+                          {/* 6 Vorqard Features Checkboxes (White boxes - Vertical on Tablet & Mobile) */}
                           <div>
                             <label className="vq-field-label">
                               FEATURES / SERVICES OF INTEREST
                             </label>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                            <div className="vq-features-interest-grid">
                               {VORQARD_FEATURES_OPTIONS.map((feat) => (
                                 <label
                                   key={feat}
-                                  style={{
-                                    display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 8px',
-                                    borderRadius: '8px', border: formData.featuresInterest.includes(feat) ? '1px solid #0284C7' : '1px solid #E2E8F0',
-                                    background: formData.featuresInterest.includes(feat) ? '#F0F9FF' : '#FAFAFA',
-                                    fontSize: '11px', fontWeight: 600, color: formData.featuresInterest.includes(feat) ? '#0284C7' : '#475569',
-                                    cursor: 'pointer', userSelect: 'none'
-                                  }}
+                                  className={`vq-feature-check-card ${formData.featuresInterest.includes(feat) ? 'active' : ''}`}
                                 >
                                   <input
                                     type="checkbox"
@@ -1180,9 +1135,9 @@ export default function App() {
                                     value={feat}
                                     checked={formData.featuresInterest.includes(feat)}
                                     onChange={handleChange}
-                                    style={{ accentColor: '#0284C7' }}
+                                    style={{ accentColor: '#0284C7', width: '14px', height: '14px', flexShrink: 0 }}
                                   />
-                                  <span style={{ lineHeight: 1.2 }}>{feat}</span>
+                                  <span style={{ lineHeight: 1.25 }}>{feat}</span>
                                 </label>
                               ))}
                             </div>
@@ -1210,23 +1165,23 @@ export default function App() {
                             background: '#F0F9FF', border: '1px solid #BAE6FD', borderRadius: '12px',
                             padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px'
                           }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '4px', borderBottom: '1px solid #E0F2FE' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '4px', borderBottom: '1px solid #E0F2FE', flexWrap: 'wrap', gap: '4px' }}>
                               <span style={{ color: '#64748B' }}>Doctor Name:</span>
                               <strong style={{ color: '#0F172A' }}>Dr. {formData.fullName}</strong>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '4px', borderBottom: '1px solid #E0F2FE' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '4px', borderBottom: '1px solid #E0F2FE', flexWrap: 'wrap', gap: '4px' }}>
                               <span style={{ color: '#64748B' }}>Mobile & Email:</span>
                               <span style={{ color: '#0F172A', fontWeight: 600 }}>+91 {formData.phone} | {formData.email}</span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '4px', borderBottom: '1px solid #E0F2FE' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '4px', borderBottom: '1px solid #E0F2FE', flexWrap: 'wrap', gap: '4px' }}>
                               <span style={{ color: '#64748B' }}>Qualification & Reg:</span>
                               <span style={{ color: '#0F172A', fontWeight: 600 }}>{formData.qualification} {formData.medicalRegNo ? `(${formData.medicalRegNo})` : ''}</span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '4px', borderBottom: '1px solid #E0F2FE' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '4px', borderBottom: '1px solid #E0F2FE', flexWrap: 'wrap', gap: '4px' }}>
                               <span style={{ color: '#64748B' }}>Specialization:</span>
                               <span style={{ color: '#0F172A', fontWeight: 600 }}>{formData.specialty} ({formData.experienceYears} Yrs Exp)</span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
                               <span style={{ color: '#64748B' }}>Workplace:</span>
                               <span style={{ color: '#0F172A', fontWeight: 600 }}>{formData.hospitalName}, {formData.city}, {formData.state}</span>
                             </div>
@@ -1294,7 +1249,8 @@ export default function App() {
           </div>
         </motion.div>
       </div>
-
     </div>
   );
 }
+
+
