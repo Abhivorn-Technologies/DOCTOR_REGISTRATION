@@ -361,7 +361,7 @@ export default function App() {
 
         {/* Subtle Ambient Glowing Background Accents */}
         <div
-          className="animate-pulse-glow"
+          className="animate-pulse-glow hidden sm:block"
           style={{
             position: 'absolute',
             top: '-120px',
@@ -377,7 +377,7 @@ export default function App() {
           }}
         />
         <div
-          className="animate-pulse-glow"
+          className="animate-pulse-glow hidden sm:block"
           style={{
             position: 'absolute',
             bottom: '-60px',

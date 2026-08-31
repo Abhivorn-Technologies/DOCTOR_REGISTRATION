@@ -39,10 +39,11 @@ export default function BorderGlow({
       onMouseMove={handleMouseMove}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={`relative transition-all duration-300 ${className}`}
+      className={`relative transition-all duration-300 w-full max-w-full box-border ${className}`}
       style={{
         borderRadius: borderRadius,
         padding: `${borderWidth}px`,
+        boxSizing: 'border-box',
         boxShadow: isHovered
           ? '0 20px 50px rgba(0, 0, 0, 0.10), 0 0 12px rgba(2, 132, 199, 0.18)'
           : '0 20px 45px rgba(0, 0, 0, 0.07), 0 2px 10px rgba(0, 0, 0, 0.03)',
@@ -50,7 +51,7 @@ export default function BorderGlow({
     >
       {/* Dynamic Cursor Border Glow Track (Slim border perimeter) */}
       <div
-        className="pointer-events-none absolute inset-0 transition-opacity duration-300 z-0"
+        className="pointer-events-none absolute inset-0 transition-opacity duration-300 z-0 overflow-hidden"
         style={{
           borderRadius: borderRadius,
           opacity: isHovered ? 1 : 0.35,
@@ -62,10 +63,11 @@ export default function BorderGlow({
 
       {/* Solid Pure White Card Layer (Completely opaque, never changes) */}
       <div
-        className="relative z-10 w-full h-full bg-white transition-all overflow-hidden"
+        className="relative z-10 w-full h-full bg-white transition-all overflow-hidden box-border"
         style={{
           borderRadius: `calc(${borderRadius} - ${borderWidth}px)`,
           backgroundColor: '#FFFFFF',
+          boxSizing: 'border-box',
         }}
       >
         {children}
