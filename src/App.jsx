@@ -641,6 +641,7 @@ export default function App() {
                               <input
                                 type="text"
                                 id="fullName"
+                                placeholder="e.g., Dr. Abhivorn"
                                 value={formData.fullName}
                                 onChange={handleChange}
                                 className={`vq-input ${errors.fullName ? 'err' : ''}`}
@@ -672,6 +673,7 @@ export default function App() {
                                 type="tel"
                                 id="phone"
                                 maxLength={10}
+                                placeholder="Enter your mobile number"
                                 value={formData.phone}
                                 onChange={handleChange}
                                 style={{ paddingLeft: '84px' }}
@@ -693,6 +695,7 @@ export default function App() {
                               <input
                                 type="email"
                                 id="email"
+                                placeholder="e.g., abhivorn@gmail.com"
                                 value={formData.email}
                                 onChange={handleChange}
                                 className={`vq-input ${errors.email ? 'err' : ''}`}
@@ -801,6 +804,7 @@ export default function App() {
                                 <input
                                   type="text"
                                   id="qualification"
+                                  placeholder="e.g., MBBS, MD, MS"
                                   value={formData.qualification}
                                   onChange={handleChange}
                                   className={`vq-input ${errors.qualification ? 'err' : ''}`}
@@ -821,6 +825,7 @@ export default function App() {
                                 <input
                                   type="text"
                                   id="medicalRegNo"
+                                  placeholder="e.g., KMC/2020/123456"
                                   value={formData.medicalRegNo}
                                   onChange={handleChange}
                                   className="vq-input"
@@ -880,6 +885,7 @@ export default function App() {
                                   type="number"
                                   id="experienceYears"
                                   min="0"
+                                  placeholder="e.g., 8"
                                   value={formData.experienceYears}
                                   onChange={handleChange}
                                   className={`vq-input ${errors.experienceYears ? 'err' : ''}`}
@@ -902,6 +908,7 @@ export default function App() {
                                 <input
                                   type="text"
                                   id="subSpecialty"
+                                  placeholder="e.g., Interventional Cardiology"
                                   value={formData.subSpecialty}
                                   onChange={handleChange}
                                   className="vq-input"
@@ -921,6 +928,7 @@ export default function App() {
                                 <input
                                   type="text"
                                   id="stateCouncil"
+                                  placeholder="e.g., Karnataka Medical Council"
                                   value={formData.stateCouncil}
                                   onChange={handleChange}
                                   className="vq-input"
@@ -942,6 +950,7 @@ export default function App() {
                                 <input
                                   type="text"
                                   id="designation"
+                                  placeholder="e.g., Consultant Cardiologist"
                                   value={formData.designation}
                                   onChange={handleChange}
                                   className="vq-input"
@@ -996,6 +1005,7 @@ export default function App() {
                               <input
                                 type="text"
                                 id="hospitalName"
+                                placeholder="e.g., Vorqard Medicare"
                                 value={formData.hospitalName}
                                 onChange={handleChange}
                                 className={`vq-input ${errors.hospitalName ? 'err' : ''}`}
@@ -1018,6 +1028,7 @@ export default function App() {
                                   type="text"
                                   id="pincode"
                                   maxLength={6}
+                                  placeholder="Enter your PIN code"
                                   value={formData.pincode}
                                   onChange={handlePincodeChange}
                                   className={`vq-input ${errors.pincode ? 'err' : ''}`}
@@ -1045,6 +1056,7 @@ export default function App() {
                                 <input
                                   type="text"
                                   id="city"
+                                  placeholder="e.g., Hyderabad"
                                   value={formData.city}
                                   onChange={handleChange}
                                   className={`vq-input ${errors.city ? 'err' : ''}`}
@@ -1067,6 +1079,7 @@ export default function App() {
                                 <input
                                   type="text"
                                   id="state"
+                                  placeholder="e.g., Telangana"
                                   value={formData.state}
                                   onChange={handleChange}
                                   className={`vq-input ${errors.state ? 'err' : ''}`}
@@ -1087,6 +1100,7 @@ export default function App() {
                                 <input
                                   type="text"
                                   id="clinicAddress"
+                                  placeholder="e.g., Banjara Hills, Jubilee Hills"
                                   value={formData.clinicAddress}
                                   onChange={handleChange}
                                   className="vq-input"
