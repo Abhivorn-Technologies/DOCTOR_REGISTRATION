@@ -12,7 +12,7 @@
   --border: #E2E8F0;
   --text: #0F172A;
   --text-muted: #64748B;
-  font-family: 'Inter', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 * {
@@ -22,33 +22,58 @@
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
-   DESKTOP OPTIMIZED NON-SCROLLABLE FULL VIEWPORT
+   RESPONSIVE ROOT & PAGE LAYOUT
+   - DESKTOP (PC/Laptop >= 1024px): Strictly locked to 100vh, NO SCROLLING
+   - MOBILE & TABLET (< 1024px): Natural smooth scrolling
    ═════════════════════════════════════════════════════════════════════════ */
 
-html, body, #root {
+html {
   width: 100%;
-  height: 100vh;
   margin: 0;
   padding: 0;
-  overflow-x: hidden;
-  background-color: #0F172A;
+  background-color: #F8FAFC;
   color: #0F172A;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
+body, #root {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+}
+
+/* Mobile & Tablet */
+@media (max-width: 1023px) {
+  html {
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+}
+
+/* Desktop & PCs: Strict Non-Scrollable 100vh Viewport */
 @media (min-width: 1024px) {
   html, body, #root {
+    height: 100vh !important;
+    max-height: 100vh !important;
     overflow: hidden !important;
-    max-height: 100vh;
   }
 }
 
 .vq-page-root {
   width: 100%;
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: #F8FAFC;
+  position: relative;
+}
+
+@media (max-width: 1023px) {
+  .vq-page-root {
+    min-height: 100vh;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -59,6 +84,142 @@ html, body, #root {
   }
 }
 
+/* ═════════════════════════════════════════════════════════════════════════
+   TOP HEADER BAR
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.vq-header {
+  width: 100%;
+  height: 56px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+@media (min-width: 640px) {
+  .vq-header {
+    height: 60px;
+    padding: 0 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .vq-header {
+    height: 60px;
+    padding: 0 36px;
+  }
+}
+
+.vq-header-logo {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+@media (min-width: 640px) {
+  .vq-header-logo {
+    height: 36px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .vq-header-logo {
+    height: 36px;
+  }
+}
+
+.vq-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (min-width: 640px) {
+  .vq-header-actions {
+    gap: 12px;
+  }
+}
+
+.vq-header-btn-explore {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .vq-header-btn-explore {
+    padding: 7px 16px;
+    font-size: 13px;
+    border-radius: 10px;
+    gap: 6px;
+  }
+}
+
+.vq-header-btn-explore:hover {
+  background: #F8FAFC;
+  border-color: #94A3B8;
+  color: #0F172A;
+}
+
+.vq-header-btn-signup {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%);
+  border: none;
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 10px rgba(2, 132, 199, 0.25);
+  white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .vq-header-btn-signup {
+    padding: 7px 18px;
+    font-size: 13px;
+    border-radius: 10px;
+    gap: 6px;
+  }
+}
+
+.vq-header-btn-signup:hover {
+  box-shadow: 0 5px 15px rgba(2, 132, 199, 0.38);
+  transform: translateY(-1px);
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   MAIN PAGE WRAPPER & BACKGROUND
+   ═════════════════════════════════════════════════════════════════════════ */
+
 .vq-page-wrapper {
   flex: 1;
   width: 100%;
@@ -66,18 +227,32 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px 40px;
+  padding: 20px 14px 40px 14px;
   background-image: url('/auth_hospital_reception_exact.jpg');
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
-  background-color: #0F172A;
+  background-color: #F8FAFC;
+}
+
+@media (min-width: 640px) {
+  .vq-page-wrapper {
+    padding: 28px 20px 48px 20px;
+  }
 }
 
 @media (min-width: 1024px) {
   .vq-page-wrapper {
-    min-height: 0;
+    height: calc(100vh - 60px);
+    max-height: calc(100vh - 60px);
     overflow: hidden;
+    padding: 10px 32px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .vq-page-wrapper {
+    padding: 14px 40px;
   }
 }
 
@@ -86,80 +261,160 @@ html, body, #root {
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background: linear-gradient(90deg, rgba(234, 246, 255, 0.97) 0%, rgba(214, 240, 255, 0.92) 40%, rgba(184, 231, 255, 0.60) 68%, transparent 92%);
+  background: linear-gradient(180deg, rgba(240, 249, 255, 0.98) 0%, rgba(224, 242, 254, 0.96) 50%, rgba(240, 249, 255, 0.98) 100%);
 }
+
+@media (min-width: 1024px) {
+  .vq-gradient-overlay {
+    background: linear-gradient(90deg, rgba(234, 246, 255, 0.98) 0%, rgba(214, 240, 255, 0.94) 40%, rgba(184, 231, 255, 0.65) 70%, rgba(240, 249, 255, 0.85) 100%);
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   MAIN 2-COLUMN / STACKED CONTAINER
+   ═════════════════════════════════════════════════════════════════════════ */
 
 .vq-container {
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 1420px;
+  max-width: 100%;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  gap: 32px;
+  align-items: stretch;
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .vq-container {
+    max-width: 680px;
+    align-items: center;
+    gap: 28px;
+  }
 }
 
 @media (min-width: 1024px) {
   .vq-container {
+    max-width: 1140px;
+    height: 100%;
+    max-height: 100%;
     flex-direction: row;
     align-items: center;
-    gap: 48px;
+    justify-content: space-between;
+    gap: 32px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .vq-container {
+    max-width: 1240px;
+    gap: 44px;
   }
 }
 
 @media (min-width: 1440px) {
   .vq-container {
-    gap: 64px;
+    max-width: 1320px;
+    gap: 52px;
   }
 }
 
-/* Left Hero Content */
+/* ═════════════════════════════════════════════════════════════════════════
+   LEFT HERO COLUMN: "Why Join Vorqard Doctor?"
+   Linear / Vertical in ALL Views (Mobile, Tablet, Laptop, Desktop)
+   ═════════════════════════════════════════════════════════════════════════ */
+
 .vq-hero-column {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  max-width: 560px;
   width: 100%;
-  gap: 16px;
+  gap: 10px;
   z-index: 1;
 }
 
-@media (max-width: 1023px) {
+@media (min-width: 768px) and (max-width: 1023px) {
   .vq-hero-column {
-    display: none;
+    max-width: 640px;
+    align-items: center;
+    text-align: center;
+  }
+}
+
+@media (min-width: 1024px) {
+  .vq-hero-column {
+    max-width: 480px;
+    gap: 10px;
+    text-align: left;
+    align-items: flex-start;
+  }
+}
+
+@media (min-width: 1280px) {
+  .vq-hero-column {
+    max-width: 520px;
+    gap: 12px;
   }
 }
 
 .vq-hero-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 5px 14px;
+  gap: 6px;
+  padding: 3px 10px;
   border-radius: 9999px;
-  background: rgba(224, 242, 254, 0.9);
+  background: rgba(224, 242, 254, 0.95);
   border: 1px solid #BAE6FD;
   color: #0284C7;
-  font-size: 13px;
+  font-size: 11.5px;
   font-weight: 700;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  width: fit-content;
+}
+
+@media (min-width: 640px) {
+  .vq-hero-badge {
+    font-size: 12px;
+    padding: 4px 12px;
+    margin-bottom: 6px;
+    gap: 7px;
+  }
 }
 
 .vq-hero-title {
-  font-size: 42px;
+  font-size: 24px;
   font-weight: 800;
   color: #0F172A;
   letter-spacing: -0.03em;
   line-height: 1.15;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
+}
+
+@media (min-width: 640px) {
+  .vq-hero-title {
+    font-size: 28px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .vq-hero-title {
+    font-size: 32px;
+    line-height: 1.15;
+    margin-bottom: 4px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .vq-hero-title {
+    font-size: 36px;
+  }
 }
 
 @media (min-width: 1440px) {
   .vq-hero-title {
-    font-size: 46px;
+    font-size: 40px;
   }
 }
 
@@ -168,46 +423,86 @@ html, body, #root {
 }
 
 .vq-hero-desc {
-  font-size: 14.5px;
+  font-size: 12.5px;
   color: #475569;
   font-weight: 500;
-  line-height: 1.55;
-  max-width: 500px;
+  line-height: 1.45;
+  max-width: 100%;
 }
 
+@media (min-width: 768px) and (max-width: 1023px) {
+  .vq-hero-desc {
+    max-width: 580px;
+    text-align: center;
+  }
+}
+
+@media (min-width: 1024px) {
+  .vq-hero-desc {
+    font-size: 13px;
+    line-height: 1.5;
+    max-width: 480px;
+  }
+}
+
+/* ─── 5 Feature Benefit Cards (LINEAR in ALL views) ─── */
 .vq-features-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 7px;
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .vq-features-list {
+    gap: 7px;
+  }
 }
 
 .vq-feature-card {
   display: flex;
   align-items: center;
-  gap: 14px;
-  background: rgba(255, 255, 255, 0.92);
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(186, 230, 253, 0.85);
-  padding: 10px 18px;
-  border-radius: 14px;
-  width: fit-content;
-  max-width: 520px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  padding: 7px 12px;
+  border-radius: 12px;
+  width: 100%;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
   transition: all 0.25s ease;
+  text-align: left;
+}
+
+@media (min-width: 1024px) {
+  .vq-feature-card {
+    padding: 7px 14px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 480px;
+    gap: 12px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .vq-feature-card {
+    max-width: 500px;
+    padding: 8px 16px;
+  }
 }
 
 .vq-feature-card:hover {
   background: #FFFFFF;
   border-color: #BAE6FD;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(2, 132, 199, 0.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.1);
 }
 
 .vq-feature-icon-box {
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
   background: rgba(2, 132, 199, 0.1);
   color: #0284C7;
   display: flex;
@@ -216,47 +511,88 @@ html, body, #root {
   flex-shrink: 0;
 }
 
+@media (min-width: 640px) {
+  .vq-feature-icon-box {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+  }
+}
+
+.vq-feature-info {
+  flex: 1;
+  min-width: 0;
+}
+
 .vq-feature-info h4 {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: #0F172A;
   line-height: 1.2;
 }
 
+@media (min-width: 640px) {
+  .vq-feature-info h4 {
+    font-size: 13.5px;
+  }
+}
+
 .vq-feature-info p {
-  font-size: 12px;
+  font-size: 11px;
   color: #64748B;
   font-weight: 500;
-  line-height: 1.35;
-  margin-top: 2px;
+  line-height: 1.3;
+  margin-top: 1px;
+}
+
+@media (min-width: 640px) {
+  .vq-feature-info p {
+    font-size: 11.5px;
+  }
 }
 
 .vq-explore-card {
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 10px 20px;
-  border-radius: 14px;
+  gap: 12px;
+  padding: 8px 14px;
+  border-radius: 12px;
   background: #FFFFFF;
   border: 1px solid #BAE6FD;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   transition: all 0.2s ease;
-  width: fit-content;
-  min-width: 260px;
+  width: 100%;
   text-decoration: none;
   cursor: pointer;
+  box-sizing: border-box;
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .vq-explore-card {
+    max-width: 360px;
+    margin: 0 auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .vq-explore-card {
+    width: fit-content;
+    min-width: 240px;
+    padding: 8px 16px;
+    border-radius: 12px;
+  }
 }
 
 .vq-explore-card:hover {
   background: #F0F9FF;
-  box-shadow: 0 6px 18px rgba(2, 132, 199, 0.14);
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.12);
   transform: translateY(-1px);
 }
 
 .vq-explore-btn-circle {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: rgba(2, 132, 199, 0.1);
   color: #0284C7;
@@ -264,6 +600,14 @@ html, body, #root {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .vq-explore-btn-circle {
+    width: 30px;
+    height: 30px;
+  }
 }
 
 .vq-explore-card:hover .vq-explore-btn-circle {
@@ -271,28 +615,94 @@ html, body, #root {
   color: #FFFFFF;
 }
 
-/* Right Form Card Column */
+/* ═════════════════════════════════════════════════════════════════════════
+   RIGHT FORM CARD COLUMN
+   ═════════════════════════════════════════════════════════════════════════ */
+
 .vq-card-column {
   width: 100%;
-  max-width: 520px;
+  max-width: 100%;
   z-index: 1;
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .vq-card-column {
+    max-width: 580px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .vq-card-column {
+    max-width: 480px;
+    flex-shrink: 0;
+  }
+}
+
+@media (min-width: 1280px) {
+  .vq-card-column {
+    max-width: 500px;
+  }
 }
 
 @media (min-width: 1440px) {
   .vq-card-column {
-    max-width: 540px;
+    max-width: 520px;
   }
 }
 
-/* Input Fields */
+.vq-form-card-inner {
+  padding: 16px 14px 14px 14px;
+}
+
+@media (min-width: 640px) {
+  .vq-form-card-inner {
+    padding: 20px 22px 18px 22px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .vq-form-card-inner {
+    padding: 20px 24px 16px 24px;
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   FORM FIELDS & CONTROLS
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.vq-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+@media (max-width: 360px) {
+  .vq-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 640px) {
+  .vq-grid-2 {
+    gap: 8px;
+  }
+}
+
 .vq-field-label {
   display: block;
-  font-size: 11.5px;
+  font-size: 10.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: #475569;
-  margin-bottom: 5px;
+  margin-bottom: 3px;
+}
+
+@media (min-width: 640px) {
+  .vq-field-label {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
 }
 
 .vq-field-label .req {
@@ -303,11 +713,12 @@ html, body, #root {
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
 .vq-input-icon {
   position: absolute;
-  left: 14px;
+  left: 12px;
   color: #94A3B8;
   pointer-events: none;
   display: flex;
@@ -319,12 +730,21 @@ html, body, #root {
   width: 100%;
   background: #FFFFFF;
   border: 1px solid #CBD5E1;
-  border-radius: 12px;
-  padding: 10px 14px 10px 42px;
-  font-size: 14px;
+  border-radius: 10px;
+  padding: 8px 12px 8px 36px;
+  font-size: 13px;
   color: #0F172A;
   outline: none;
   transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+@media (min-width: 640px) {
+  .vq-input {
+    padding: 8.5px 12px 8.5px 38px;
+    font-size: 13.5px;
+    border-radius: 11px;
+  }
 }
 
 .vq-input:focus {
@@ -342,15 +762,24 @@ html, body, #root {
   width: 100%;
   background: #FFFFFF;
   border: 1px solid #CBD5E1;
-  border-radius: 12px;
-  padding: 10px 34px 10px 14px;
-  font-size: 14px;
+  border-radius: 10px;
+  padding: 8px 28px 8px 12px;
+  font-size: 13px;
   color: #0F172A;
   outline: none;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
   transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+@media (min-width: 640px) {
+  .vq-select {
+    padding: 8.5px 30px 8.5px 12px;
+    font-size: 13.5px;
+    border-radius: 11px;
+  }
 }
 
 .vq-select:focus {
@@ -366,35 +795,69 @@ html, body, #root {
 
 .vq-select-chevron {
   position: absolute;
-  right: 14px;
+  right: 10px;
   color: #94A3B8;
   pointer-events: none;
 }
 
 .vq-error-text {
   color: #F43F5E;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   margin-top: 2px;
   display: block;
   padding-left: 2px;
 }
 
+.vq-tab-title {
+  font-size: 10px;
+}
+
+@media (min-width: 380px) {
+  .vq-tab-title {
+    font-size: 11px;
+  }
+}
+
+@media (min-width: 480px) {
+  .vq-tab-title {
+    font-size: 11.5px;
+  }
+}
+
+@media (min-width: 640px) {
+  .vq-tab-title {
+    font-size: 12px;
+  }
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.7);
 }
 
 /* Subtle glowing pulse */
 @keyframes pulseGlow {
   0%, 100% {
-    opacity: 0.35;
+    opacity: 0.3;
     transform: scale(1);
   }
   50% {
-    opacity: 0.6;
+    opacity: 0.55;
     transform: scale(1.04);
   }
 }

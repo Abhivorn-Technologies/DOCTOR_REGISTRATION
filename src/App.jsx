@@ -317,57 +317,25 @@ export default function App() {
   return (
     <div className="vq-page-root">
       {/* ══════════════ TOP HEADER BAR ══════════════ */}
-      <header
-        style={{
-          width: '100%',
-          height: '64px',
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          borderBottom: '1px solid rgba(226, 232, 240, 0.85)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 42px',
-          position: 'relative',
-          zIndex: 50,
-          flexShrink: 0,
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
-        }}
-      >
+      <header className="vq-header">
         <a href="https://www.vorqard.com/" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center' }}>
           <img
             src="/Abhivorn_logo.png"
             alt="Vorqard Logo"
-            style={{ height: '40px', width: 'auto', objectFit: 'contain' }}
+            className="vq-header-logo"
             onError={(e) => {
               e.currentTarget.src = '/logo.png';
             }}
           />
         </a>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <div className="vq-header-actions">
           {/* Explore Button */}
           <a
             href="https://www.vorqard.com/"
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 18px',
-              borderRadius: '10px',
-              background: '#FFFFFF',
-              border: '1px solid #CBD5E1',
-              color: '#334155',
-              fontSize: '13.5px',
-              fontWeight: 700,
-              textDecoration: 'none',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
-            }}
+            className="vq-header-btn-explore"
           >
             <span>Explore</span>
             <ExternalLink size={13} />
@@ -378,22 +346,7 @@ export default function App() {
             href="https://app.vorqard.com/signup"
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 20px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
-              border: 'none',
-              color: '#FFFFFF',
-              fontSize: '13.5px',
-              fontWeight: 700,
-              textDecoration: 'none',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 4px 12px rgba(2, 132, 199, 0.28)',
-            }}
+            className="vq-header-btn-signup"
           >
             <span>Get Started</span>
             <ArrowRight size={14} />
@@ -556,7 +509,7 @@ export default function App() {
               borderWidth={1.5}
               className="shadow-[0_20px_50px_rgba(0,0,0,0.07),_0_4px_16px_rgba(0,0,0,0.03)]"
             >
-              <div style={{ padding: '26px 30px 22px 30px' }}>
+              <div className="vq-form-card-inner">
                 {registeredData ? (
                   /* ══ SUCCESS VIEW ══ */
                   <motion.div
@@ -744,7 +697,7 @@ export default function App() {
                           </div>
 
                           {/* Gender & Preferred Comm. */}
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                          <div className="vq-grid-2">
                             {/* Gender */}
                             <div>
                               <label className="vq-field-label">
@@ -796,7 +749,7 @@ export default function App() {
                       {/* ─── STEP 2: Medical Credentials ─── */}
                       {step === 2 && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                          <div className="vq-grid-2">
                             {/* Specialty */}
                             <div>
                               <label className="vq-field-label">
@@ -878,7 +831,7 @@ export default function App() {
                           </div>
 
                           {/* Qualifications & State */}
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                          <div className="vq-grid-2">
                             {/* Qualifications */}
                             <div>
                               <label className="vq-field-label">
@@ -951,7 +904,7 @@ export default function App() {
                       {/* ─── STEP 3: Practice & Services ─── */}
                       {step === 3 && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                          <div className="vq-grid-2">
                             {/* Hospital / Clinic */}
                             <div>
                               <label className="vq-field-label">
@@ -1046,7 +999,7 @@ export default function App() {
                             <label className="vq-field-label">
                               CONSULTATION MODES
                             </label>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                            <div className="vq-grid-2">
                               <label
                                 style={{
                                   display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px',
